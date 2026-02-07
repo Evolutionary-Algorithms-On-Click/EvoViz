@@ -1,11 +1,11 @@
-import { DEFAULT_CONFIG, Population, EAConfig } from './utils/common';
-import { initGA, stepGA } from './algorithms/ga';
-import { initDE, stepDE } from './algorithms/de';
-import { initES, stepES } from './algorithms/es';
-import { initPSO, stepPSO } from './algorithms/pso';
-import { initGP, stepGP } from './algorithms/gp';
+import { DEFAULT_CONFIG, Population, EAConfig } from './src/utils/common';
+import { initGA, stepGA } from './src/algorithms/ga';
+import { initDE, stepDE } from './src/algorithms/de';
+import { initES, stepES } from './src/algorithms/es';
+import { initPSO, stepPSO } from './src/algorithms/pso';
+import { initGP, stepGP } from './src/algorithms/gp';
 
-import { StepLog } from './utils/internal-algo-logs';
+import { StepLog } from './src/utils/internal-algo-logs';
 
 type AlgoInit = (config: EAConfig) => Population;
 type AlgoStep = (pop: Population, config: EAConfig) => { nextPop: Population; logs: StepLog };

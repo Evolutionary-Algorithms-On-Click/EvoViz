@@ -1,16 +1,31 @@
 {
   "name": "evoviz",
   "version": "1.0.0",
-  "description": "Evolutionary Algorithms Visualization CLI",
-  "main": "main.ts",
+  "description": "Evolutionary Algorithms Visualization",
+  "type": "module",
+  "main": "main_cli.ts",
   "scripts": {
-    "start": "ts-node main.ts"
+    "start": "ts-node --esm main_cli.ts",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
+    "lucide-react": "^0.344.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "recharts": "^2.12.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
   "devDependencies": {
-    "@types/node": "^20.11.5"
+    "@types/node": "^20.11.5",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.24",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.1",
+    "vite": "^5.2.0"
   }
 }
