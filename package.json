@@ -1,0 +1,16 @@
+{
+  "name": "evoviz",
+  "version": "1.0.0",
+  "description": "Evolutionary Algorithms Visualization CLI",
+  "main": "main.ts",
+  "scripts": {
+    "start": "ts-node main.ts"
+  },
+  "dependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5"
+  }
+}
