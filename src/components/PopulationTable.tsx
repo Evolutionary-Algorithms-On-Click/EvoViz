@@ -53,7 +53,9 @@ const PopulationTable: React.FC<Props> = ({ population, algo, knapsackItems, kna
                     <span className="text-blue-400">
                         [{ind.genes.map(g => {
                             if (config && config.gpOperations.length > 0) {
-                                return config.gpOperations[g % config.gpOperations.length].label;
+                                const opIndex = Math.abs(Math.floor(g)) % config.gpOperations.length;
+                                const op = config.gpOperations[opIndex];
+                                return op ? op.label : '?';
                             }
                             return g;
                         }).join(', ')}]

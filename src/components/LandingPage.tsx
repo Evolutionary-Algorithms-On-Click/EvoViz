@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowDown, Cpu, GitBranch, Globe, Zap, Activity, Dna, Search, Network, Sparkles, MousePointer2 } from 'lucide-react';
+import { ArrowDown, Cpu, GitBranch, Globe, Zap, Activity, Dna, Search, Network, Sparkles } from 'lucide-react';
 import BackgroundEffect from './BackgroundEffect';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
-interface Props {
-  onSelectAlgo: (algo: string) => void;
-}
-
-const LandingPage: React.FC<Props> = ({ onSelectAlgo }) => {
+const LandingPage: React.FC = () => {
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -113,7 +110,6 @@ const LandingPage: React.FC<Props> = ({ onSelectAlgo }) => {
                  desc="The OG of evolution. Uses binary genes, crossover (mating), and mutation to pack the perfect backpack. It's Darwinism, but for math problems." 
                  icon={<Cpu />} 
                  color="blue" 
-                 onSelect={onSelectAlgo} 
                />
                <AlgoCard 
                  id="DE" 
@@ -121,7 +117,6 @@ const LandingPage: React.FC<Props> = ({ onSelectAlgo }) => {
                  desc="Vector calculus meets survival. It uses differences between agents to drive mutation. Excellent for continuous functions and impressing your math professor." 
                  icon={<Zap />} 
                  color="amber" 
-                 onSelect={onSelectAlgo} 
                />
                <AlgoCard 
                  id="PSO" 
@@ -129,7 +124,6 @@ const LandingPage: React.FC<Props> = ({ onSelectAlgo }) => {
                  desc="Bird flocking simulator. Particles fly through search space, remembering their best spots and gossiping with neighbors about theirs. No actual birds harmed." 
                  icon={<Globe />} 
                  color="emerald" 
-                 onSelect={onSelectAlgo} 
                />
                <AlgoCard 
                  id="GP" 
@@ -137,7 +131,6 @@ const LandingPage: React.FC<Props> = ({ onSelectAlgo }) => {
                  desc="Evolution writing code. We breed syntax trees that eventually (hopefully) solve the equation. It's like infinite monkeys with typewriters, but optimized." 
                  icon={<GitBranch />} 
                  color="purple" 
-                 onSelect={onSelectAlgo} 
                />
                <AlgoCard 
                  id="ES" 
@@ -145,7 +138,6 @@ const LandingPage: React.FC<Props> = ({ onSelectAlgo }) => {
                  desc="The self-optimizing optimizer. It adapts its own mutation rates (Sigma) on the fly. It learns how to learn. Meta, right?" 
                  icon={<Activity />} 
                  color="fuchsia" 
-                 onSelect={onSelectAlgo} 
                />
            </div>
            
@@ -171,7 +163,7 @@ const InfoCard = ({ icon, title, desc }: { icon: React.ReactNode, title: string,
   </div>
 );
 
-const AlgoCard = ({ id, title, desc, icon, color, onSelect }: any) => {
+const AlgoCard = ({ id, title, desc, icon, color }: any) => {
     // Dynamic color maps
     const colors: any = {
         blue: {
@@ -219,9 +211,9 @@ const AlgoCard = ({ id, title, desc, icon, color, onSelect }: any) => {
     const c = colors[color];
 
     return (
-        <button 
-            onClick={() => onSelect(id)}
-            className={`group text-left p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-md transition-all duration-500 hover:-translate-y-3 relative overflow-hidden ${c.border} ${c.bg} ${c.shadow}`}
+        <Link 
+            to={`/visualizer/${id.toLowerCase()}`}
+            className={`group text-left p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-md transition-all duration-500 hover:-translate-y-3 relative overflow-hidden ${c.border} ${c.bg} ${c.shadow} block`}
         >
             {/* Inner Glow Gradient */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
@@ -247,7 +239,7 @@ const AlgoCard = ({ id, title, desc, icon, color, onSelect }: any) => {
             <div className="mt-8 flex items-center text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 text-slate-400 group-hover:text-white">
                <span>Initialize Engine</span>
             </div>
-        </button>
+        </Link>
     )
 }
 
