@@ -46,9 +46,9 @@ const Visualizer: React.FC<Props> = ({ history, currentPop, algo, config }) => {
   }, [currentPop, isGPSine, config]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-64 w-full">
+    <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 w-full lg:h-64">
       {/* Fitness History */}
-      <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 h-full">
+      <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 h-64 lg:h-full">
         <h3 className="text-xs uppercase text-slate-400 mb-2">
             {isKnapsack ? 'Value History (Higher is Better)' : 'Error History (Lower is Better)'}
         </h3>
@@ -67,7 +67,7 @@ const Visualizer: React.FC<Props> = ({ history, currentPop, algo, config }) => {
       </div>
 
       {/* Right Chart: 2D Projection OR Function Fit */}
-      <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 h-full">
+      <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 h-64 lg:h-full">
         <h3 className="text-xs uppercase text-slate-400 mb-2">
             {isGPSine ? 'Function Fit (Target vs Best)' : '2D Projection (Gene 0 vs Gene 1)'}
         </h3>

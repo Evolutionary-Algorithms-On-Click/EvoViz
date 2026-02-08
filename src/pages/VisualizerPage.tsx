@@ -155,7 +155,7 @@ const VisualizerPage: React.FC = () => {
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
                 {/* Left Column: Controls & Configuration */}
                 <div className="xl:col-span-1 space-y-6">
-                    <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg sticky top-4">
+                    <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg xl:sticky xl:top-4">
                         <div className="flex justify-between items-center mb-4">
                             <span className="text-sm uppercase tracking-wider text-slate-400">Control Panel</span>
                             <span className={`px-2 py-1 rounded text-xs font-bold ${gen >= config.maxGenerations ? 'bg-red-900 text-red-200' : 'bg-blue-900 text-blue-200'}`}>
