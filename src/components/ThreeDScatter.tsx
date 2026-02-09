@@ -16,102 +16,70 @@ interface Props {
 const ThreeDScatter: React.FC<Props> = ({ points, range, title }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [rotation, setRotation] = useState({ x: -0.5, y: 0.5 });
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  
   const isDragging = useRef(false);
+  const dragType = useRef<'rotate' | 'pan' | null>(null);
   const lastMouse = useRef({ x: 0, y: 0 });
 
-  // Draw function
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Draw function and Event Listeners
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Handle high DPI
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-
-    const width = rect.width;
-    const height = rect.height;
-    const cx = width / 2;
-    const cy = height / 2;
-
-    // Clear
-    ctx.clearRect(0, 0, width, height);
+    // Handle high DPI and resizing
+    const handleResize = () => {
+        const parent = canvas.parentElement;
+        if (parent) {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = parent.getBoundingClientRect();
+            
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+        }
+    };
     
-    // Projection settings
-    const scale = Math.min(width, height) / (range * 4); // Zoom
+    handleResize();
+
+    const width = parseFloat(canvas.style.width);
+    const height = parseFloat(canvas.style.height);
+    const cx = width / 2 + pan.x;
+    const cy = height / 2 + pan.y;
+
+    ctx.clearRect(0, 0, width, height);
+    const scale = (Math.min(width, height) / (range * 2)) * zoom; 
     
     const project = (x: number, y: number, z: number) => {
-        // Rotate Y (horizontal mouse)
         const x1 = x * Math.cos(rotation.y) - z * Math.sin(rotation.y);
         const z1 = x * Math.sin(rotation.y) + z * Math.cos(rotation.y);
-        
-        // Rotate X (vertical mouse)
         const y2 = y * Math.cos(rotation.x) - z1 * Math.sin(rotation.x);
         const z2 = y * Math.sin(rotation.x) + z1 * Math.cos(rotation.x);
-        
-        // 2D Projection (Perspective-ish)
-        // Simple isometric-like for stability:
-        // return { x: cx + x1 * scale, y: cy - y2 * scale, z: z2 };
-        
-        // Let's do weak perspective
-        const f = 500;
-        const dist = f / (f - z2 * scale); // z2 is small range, scale makes it screen pixels
-        // Wait, z2 is in data units approx [-range, range].
-        // Let's stick to simple orthographic for clarity of axes, 
-        // or simple projection.
-        
-        return {
-            x: cx + x1 * scale,
-            y: cy + y2 * scale, // y is gene 1. In standard 3D, Z is up. 
-                               // But here Z is fitness (up/down).
-                               // Usually we plot X, Y on ground, Z vertical.
-            z: z2
-        };
+        return { x: cx + x1 * scale, y: cy + y2 * scale, z: z2 };
     };
 
-    // We want X, Y on the "floor", Z is height.
-    // My project function above assumes Y is vertical screen axis.
-    // So mapping: 
-    // Data X -> World X
-    // Data Y -> World Z (depth)
-    // Data Z (Fitness) -> World Y (Height) - inverted because screen Y is down.
-    
-    // Revised Projection wrapper
     const transform = (dx: number, dy: number, dz: number) => {
-        // dx, dy are genes. dz is fitness (0 to large positive).
-        // Center the data
-        // X ranges [-range, range]
-        // Y ranges [-range, range]
-        // Z ranges [0, range^2*2] -> [0, 50]. 
-        // We want to center Z visually around maybe 10? Or just 0.
-        // Let's shift Z down so 0 is at the bottom of the bounding box?
-        // Actually, let's keep Z=0 as the target.
-        
-        // World coordinates:
         const wx = dx;
         const wz = dy; 
-        const wy = -dz * 0.2; // Scale Z down a bit and flip so +Fitness is UP (negative screen Y)
-        
+        const wy = -dz * 0.2;
         return project(wx, wy, wz);
     };
 
-    // 1. Draw Axis / Grid (The Bowl)
-    ctx.strokeStyle = '#334155'; // Slate-700
+    // Draw Axis / Grid
+    ctx.strokeStyle = '#334155';
     ctx.lineWidth = 1;
-    
-    // Draw wireframe grid for the sphere function z = x^2 + y^2
-    // We'll draw concentric circles and radial lines? Or a grid?
-    // Grid is better.
     const steps = 10;
-    const stepSize = (range * 2) / steps;
-
+    const stepSize = (range * 1) / steps;
     ctx.beginPath();
     for (let x = -range; x <= range; x += stepSize) {
-        for (let y = -range; y <= range; y += stepSize/5) { // Fine steps for smooth curve
+        for (let y = -range; y <= range; y += stepSize/5) {
             const z = x*x + y*y;
             const p = transform(x, y, z);
             if (y === -range) ctx.moveTo(p.x, p.y);
@@ -131,32 +99,48 @@ const ThreeDScatter: React.FC<Props> = ({ points, range, title }) => {
     // 2. Draw Points
     points.forEach(pt => {
         const p = transform(pt.x, pt.y, pt.z);
-        
-        // Draw point
         ctx.fillStyle = pt.color;
         ctx.beginPath();
-        // Size depends on depth (z) slightly for 3D effect
-        const radius = Math.max(2, 4 + p.z * 0.05); 
-        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 3 * Math.sqrt(zoom), 0, Math.PI * 2);
         ctx.fill();
-        
-        // Optional: Drop line to surface (shadow) or to zero plane?
-        // Let's just draw the point.
     });
 
-    // 3. Draw Target (0,0,0)
+    // 3. Draw Target
     const center = transform(0, 0, 0);
-    ctx.fillStyle = '#10b981'; // Emerald
+    ctx.fillStyle = '#10b981';
     ctx.beginPath();
-    ctx.arc(center.x, center.y, 4, 0, Math.PI * 2);
+    ctx.arc(center.x, center.y, 4 * Math.sqrt(zoom), 0, Math.PI * 2);
     ctx.fill();
 
-  }, [points, range, rotation]);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [points, range, rotation, zoom, pan]);
+
+  // Native wheel listener to prevent default scroll
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const onWheel = (e: WheelEvent) => {
+        e.preventDefault();
+        const factor = 0.001;
+        const delta = -e.deltaY * factor;
+        setZoom(prev => Math.max(0.1, Math.min(10, prev + delta * 5)));
+    };
+
+    container.addEventListener('wheel', onWheel, { passive: false });
+    return () => container.removeEventListener('wheel', onWheel);
+  }, []);
 
   // Mouse Interactivity
   const handleMouseDown = (e: React.MouseEvent) => {
       isDragging.current = true;
       lastMouse.current = { x: e.clientX, y: e.clientY };
+      if (e.button === 2 || e.shiftKey) {
+          dragType.current = 'pan';
+      } else {
+          dragType.current = 'rotate';
+      }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -164,33 +148,48 @@ const ThreeDScatter: React.FC<Props> = ({ points, range, title }) => {
       const dx = e.clientX - lastMouse.current.x;
       const dy = e.clientY - lastMouse.current.y;
       
-      setRotation(prev => ({
-          x: prev.x + dy * 0.01,
-          y: prev.y + dx * 0.01
-      }));
+      if (dragType.current === 'rotate') {
+        setRotation(prev => ({
+            x: prev.x + dy * 0.01,
+            y: prev.y + dx * 0.01
+        }));
+      } else if (dragType.current === 'pan') {
+          setPan(prev => ({
+              x: prev.x + dx,
+              y: prev.y + dy
+          }));
+      }
       lastMouse.current = { x: e.clientX, y: e.clientY };
   };
 
   const handleMouseUp = () => {
       isDragging.current = false;
+      dragType.current = null;
+  };
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+      e.preventDefault();
   };
 
   return (
-    <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 h-full flex flex-col">
-      <h3 className="text-xs uppercase text-slate-400 mb-2 select-none">{title}</h3>
-      <div className="flex-1 min-h-0 relative cursor-move"
+    <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 h-full flex flex-col overflow-hidden">
+      <h3 className="text-xs uppercase text-slate-400 mb-2 select-none flex justify-between">
+          <span>{title}</span>
+          <span className="text-[10px] opacity-50">L-Click: Rotate | R-Click/Shift: Pan | Scroll: Zoom</span>
+      </h3>
+      <div ref={containerRef}
+           className="flex-1 min-h-0 relative cursor-move touch-none"
            onMouseDown={handleMouseDown}
            onMouseMove={handleMouseMove}
            onMouseUp={handleMouseUp}
            onMouseLeave={handleMouseUp}
+           onContextMenu={handleContextMenu}
       >
         <canvas ref={canvasRef} className="w-full h-full block" />
-        <div className="absolute bottom-2 right-2 text-[10px] text-slate-500 pointer-events-none">
-            Drag to Rotate
-        </div>
       </div>
     </div>
   );
 };
+
 
 export default ThreeDScatter;
