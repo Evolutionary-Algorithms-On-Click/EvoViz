@@ -138,6 +138,18 @@ const ConfigPanel: React.FC<Props> = ({ config, setConfig, disabled, algo }) => 
                 <div className="col-span-2 border-t border-slate-700 pt-2 mt-2">
                     <p className="text-xs text-blue-400 mb-2 font-bold">Evolution Parameters</p>
                 </div>
+                {algo === 'DE' && (
+                    <div className="space-y-2">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase">Diff Weight (F)</label>
+                        <input 
+                            type="number" step="0.1"
+                            value={config.F}
+                            disabled={disabled}
+                            onChange={(e) => handleChange('F', parseFloat(e.target.value))}
+                            className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm text-slate-200 disabled:opacity-50"
+                        />
+                    </div>
+                )}
                 {algo === 'GP' && (
                     <div className="col-span-2 space-y-2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase">GP Problem</label>

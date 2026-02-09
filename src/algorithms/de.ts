@@ -33,7 +33,7 @@ export const stepDE = (pop: Population, config: EAConfig): { nextPop: Population
         const b = pop[r2Id];
         const c = pop[r3Id];
 
-        const F = 1;
+        const F = config.F;
         const R = randomInt(0, config.genesCount - 1);
 
         const diffVec: number[] = [];

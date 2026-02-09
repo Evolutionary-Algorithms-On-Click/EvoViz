@@ -39,6 +39,9 @@ export interface EAConfig {
   // GP Specific
   gpProblem: 'Linear' | 'Sine';
   gpOperations: GPOperation[];
+  
+  // DE Specific
+  F: number;
 }
 
 export const DEFAULT_CONFIG: EAConfig = {
@@ -51,6 +54,7 @@ export const DEFAULT_CONFIG: EAConfig = {
   c1: 1.4,
   c2: 1.4,
   sigma: 1.0,
+  F: 0.5,
   knapsackItems: DEFAULT_KNAPSACK_ITEMS,
   knapsackCapacity: DEFAULT_CAPACITY,
   tournamentSize: 3,
