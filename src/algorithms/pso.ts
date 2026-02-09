@@ -56,13 +56,13 @@ export const stepPSO = (pop: Population, config: EAConfig): { nextPop: Populatio
        return Math.round(nv); 
     });
 
-        const newPos = ind.position!.map((p, j) => {
-            let nx = p + newVel[j];
-            // Clamp to [-5, 5]
-            if (nx < -5) nx = -5;
-            if (nx > 5) nx = 5;
-            return nx;
-        });
+    const newGenes = p.position!.map((pos, j) => {
+        let nx = pos + newVelocity[j];
+        // Clamp to [-5, 5]
+        if (nx < -5) nx = -5;
+        if (nx > 5) nx = 5;
+        return nx;
+    });
 
     const newFitness = calcSphereFitness(newGenes);
     
