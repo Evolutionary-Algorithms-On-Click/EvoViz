@@ -1,5 +1,5 @@
 import { EAConfig, Population, Individual } from '../utils/common';
-import { calcSphereFitness, randomInt } from '../utils/functions';
+import { calcSphereFitness, randomInt, randomGaussian } from '../utils/functions';
 import { ESLogEntry, StepLog } from '../utils/internal-algo-logs';
 
 export const initES = (config: EAConfig): Population => {
@@ -27,13 +27,13 @@ export const stepES = (pop: Population, config: EAConfig): { nextPop: Population
       const noiseVec: number[] = [];
       const childGenes = parent.genes.map(g => {
           const sigma = config.sigma ?? 1.0;
-          const noise = (Math.random() - 0.5) * 2 * sigma;
+          const noise = randomGaussian(0, sigma);
           noiseVec.push(parseFloat(noise.toFixed(2)));
           
           let val = g + noise;
           // Clamp for only viz
-          if (val < -10) val = -10;
-          if (val > 10) val = 10;
+          if (val < -5) val = -5;
+          if (val > 5) val = 5;
           return val;
       });
 

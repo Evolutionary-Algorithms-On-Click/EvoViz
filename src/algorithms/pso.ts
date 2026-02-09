@@ -56,16 +56,13 @@ export const stepPSO = (pop: Population, config: EAConfig): { nextPop: Populatio
        return Math.round(nv); 
     });
 
-    const newGenes = p.genes.map((x, i) => {
-      let nx = x + newVelocity[i];
-      // Again clamp bounds for graph
-
-      //  NOTE: Clamps are mentione everywhere in all comments because 
-      // it only for viz sake and NOT part of the algo
-      if (nx < -10) nx = -10;
-      if (nx > 10) nx = 10;
-      return nx;
-    });
+        const newPos = ind.position!.map((p, j) => {
+            let nx = p + newVel[j];
+            // Clamp to [-5, 5]
+            if (nx < -5) nx = -5;
+            if (nx > 5) nx = 5;
+            return nx;
+        });
 
     const newFitness = calcSphereFitness(newGenes);
     

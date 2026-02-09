@@ -46,9 +46,9 @@ export const stepDE = (pop: Population, config: EAConfig): { nextPop: Population
             const weighted = F * diff;
             let mut = a.genes[j] + weighted;
 
-            // Clamp -10 to 10 to keep it bounded but allow movement
-            if (mut < -10) mut = -10;
-            if (mut > 10) mut = 10;
+            // Clamp -5 to 5 to keep it bounded but allow movement
+            if (mut < -5) mut = -5;
+            if (mut > 5) mut = 5;
 
             diffVec.push(diff);
             weightedVec.push(weighted);
