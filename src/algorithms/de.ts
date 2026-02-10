@@ -1,22 +1,24 @@
 import { EAConfig, Population } from "../utils/common";
-import { calcSphereFitness, randomInt } from "../utils/functions";
+import { calcSphereFitness, calcAckleyFitness, randomInt } from "../utils/functions";
 import { DELogEntry, StepLog } from "../utils/internal-algo-logs";
 
 
 // override init for Sphere: Range -5 to 5 for simplicity
 export const initDE = (config: EAConfig): Population => {
+    const calcFitness = config.problemType === 'Ackley' ? calcAckleyFitness : calcSphereFitness;
     return Array.from({ length: config.populationSize }, (_, i) => {
         const genes = Array.from({ length: config.genesCount }, () => randomInt(-5, 5));
         return {
             id: i,
             genes,
-            fitness: calcSphereFitness(genes)
+            fitness: calcFitness(genes)
         };
     });
 };
 
 export const stepDE = (pop: Population, config: EAConfig): { nextPop: Population; logs: StepLog } => {
     const logs: DELogEntry[] = [];
+    const calcFitness = config.problemType === 'Ackley' ? calcAckleyFitness : calcSphereFitness;
 
     const nextPop = pop.map((ind, i) => {
         let idxs = new Set<number>();
@@ -61,8 +63,8 @@ export const stepDE = (pop: Population, config: EAConfig): { nextPop: Population
             }
         });
 
-        const trialFitness = calcSphereFitness(trialGenes);
-        const mutantFitness = calcSphereFitness(mutantVec);
+        const trialFitness = calcFitness(trialGenes);
+        const mutantFitness = calcFitness(mutantVec);
         const replaces = trialFitness <= ind.fitness;
 
         logs.push({

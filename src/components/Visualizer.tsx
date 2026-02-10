@@ -46,10 +46,10 @@ const Visualizer: React.FC<Props> = ({ history, currentPop, algo, config }) => {
       return data;
   }, [currentPop, isGPSine, config]);
 
-  const isSphere = !isKnapsack && !isGPSine;
+  const isRealValued = !isKnapsack && !isGPSine;
 
   return (
-    <div className={`flex flex-col lg:grid ${isSphere ? 'xl:grid-cols-3 lg:grid-cols-2' : 'lg:grid-cols-2'} gap-4 w-full`}>
+    <div className={`flex flex-col lg:grid ${isRealValued ? 'xl:grid-cols-3 lg:grid-cols-2' : 'lg:grid-cols-2'} gap-4 w-full`}>
       {/* Fitness History */}
       <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 h-64">
         <h3 className="text-xs uppercase text-slate-400 mb-2">
@@ -109,13 +109,14 @@ const Visualizer: React.FC<Props> = ({ history, currentPop, algo, config }) => {
         </div>
       </div>
 
-      {/* 3D Scatter (Only for Sphere) */}
-      {isSphere && (
+      {/* 3D Scatter (Only for Real Valued) */}
+      {isRealValued && (
           <div className="h-64">
               <ThreeDScatter 
                 points={scatterData.map(d => ({ x: d.x, y: d.y, z: d.z, color: '#f472b6' }))} 
                 range={5} 
-                title="3D Sphere Landscape (Drag to Rotate)"
+                title={`3D ${config.problemType || 'Sphere'} Landscape (Drag to Rotate)`}
+                functionType={config.problemType}
               />
           </div>
       )}

@@ -42,6 +42,9 @@ export interface EAConfig {
   
   // DE Specific
   F: number;
+
+  // Real-valued Optimization (DE, PSO, ES)
+  problemType: 'Sphere' | 'Ackley';
 }
 
 export const DEFAULT_CONFIG: EAConfig = {
@@ -59,7 +62,8 @@ export const DEFAULT_CONFIG: EAConfig = {
   knapsackCapacity: DEFAULT_CAPACITY,
   tournamentSize: 3,
   gpProblem: 'Linear',
-  gpOperations: DEFAULT_GP_LINEAR_OPS
+  gpOperations: DEFAULT_GP_LINEAR_OPS,
+  problemType: 'Sphere'
 };
 
 

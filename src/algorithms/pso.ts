@@ -1,13 +1,14 @@
 
 import { EAConfig, Population } from "../utils/common";
-import { calcSphereFitness, randomInt } from "../utils/functions";
+import { calcSphereFitness, calcAckleyFitness, randomInt } from "../utils/functions";
 import { PSOLogEntry, StepLog } from "../utils/internal-algo-logs";
 
 
 export const initPSO = (config: EAConfig): Population => {
+  const calcFitness = config.problemType === 'Ackley' ? calcAckleyFitness : calcSphereFitness;
   return Array.from({ length: config.populationSize }, (_, i) => {
     const genes = Array.from({ length: config.genesCount }, () => randomInt(-5, 5));
-    const fitness = calcSphereFitness(genes);
+    const fitness = calcFitness(genes);
     return {
       id: i,
       genes,
@@ -29,6 +30,7 @@ export const stepPSO = (pop: Population, config: EAConfig): { nextPop: Populatio
   }
 
   const logs: PSOLogEntry[] = [];
+  const calcFitness = config.problemType === 'Ackley' ? calcAckleyFitness : calcSphereFitness;
 
   const nextPop = pop.map(p => {
     const oldVelocity = [...(p.velocity || [])];
@@ -64,7 +66,7 @@ export const stepPSO = (pop: Population, config: EAConfig): { nextPop: Populatio
         return nx;
     });
 
-    const newFitness = calcSphereFitness(newGenes);
+    const newFitness = calcFitness(newGenes);
     
     let newBestPos = p.bestPosition!;
     let newBestFit = p.bestFitness!;

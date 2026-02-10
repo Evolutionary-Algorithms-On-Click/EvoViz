@@ -132,6 +132,25 @@ const ConfigPanel: React.FC<Props> = ({ config, setConfig, disabled, algo }) => 
             />
         </div>
 
+        {/* Problem Selection for Real-Valued Algos */}
+        {(algo === 'DE' || algo === 'PSO' || algo === 'ES') && (
+            <div className="space-y-2">
+                <label className="block text-xs font-semibold text-slate-500 uppercase">Problem Function</label>
+                <div className="flex bg-slate-900 p-1 rounded">
+                    {['Sphere', 'Ackley'].map((p) => (
+                        <button
+                            key={p}
+                            onClick={() => handleChange('problemType', p)}
+                            disabled={disabled}
+                            className={`flex-1 text-xs py-1 rounded transition ${config.problemType === p ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                        >
+                            {p}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        )}
+
         {/* GA/DE/GP Params */}
         {(algo === 'GA' || algo === 'DE' || algo === 'GP') && (
             <>

@@ -5,6 +5,21 @@ export const calcSphereFitness = (genes: number[]): number => {
   return genes.reduce((acc, val) => acc + (val * val), 0);
 };
 
+export const calcAckleyFitness = (genes: number[]): number => {
+  const a = 20;
+  const b = 0.2;
+  const c = 2 * Math.PI;
+  const d = genes.length;
+
+  const sumSq = genes.reduce((acc, val) => acc + (val * val), 0);
+  const sumCos = genes.reduce((acc, val) => acc + Math.cos(c * val), 0);
+
+  const term1 = -a * Math.exp(-b * Math.sqrt(sumSq / d));
+  const term2 = -Math.exp(sumCos / d);
+
+  return term1 + term2 + a + Math.E;
+};
+
 export const calcKnapsackFitness = (genes: number[], items: KnapsackItem[], capacity: number): { fitness: number, weight: number, isValid: boolean } => {
   let totalValue = 0;
   let totalWeight = 0;

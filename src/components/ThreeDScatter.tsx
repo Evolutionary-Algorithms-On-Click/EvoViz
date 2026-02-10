@@ -11,9 +11,10 @@ interface Props {
   points: Point3D[];
   range: number;
   title: string;
+  functionType?: 'Sphere' | 'Ackley';
 }
 
-const ThreeDScatter: React.FC<Props> = ({ points, range, title }) => {
+const ThreeDScatter: React.FC<Props> = ({ points, range, title, functionType = 'Sphere' }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [rotation, setRotation] = useState({ x: -0.5, y: 0.5 });
   const [zoom, setZoom] = useState(1);
@@ -24,6 +25,18 @@ const ThreeDScatter: React.FC<Props> = ({ points, range, title }) => {
   const lastMouse = useRef({ x: 0, y: 0 });
 
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const getZ = (x: number, y: number) => {
+      if (functionType === 'Ackley') {
+          const a = 20, b = 0.2, c = 2 * Math.PI;
+          const sumSq = x*x + y*y;
+          const sumCos = Math.cos(c*x) + Math.cos(c*y);
+          const term1 = -a * Math.exp(-b * Math.sqrt(sumSq / 2));
+          const term2 = -Math.exp(sumCos / 2);
+          return term1 + term2 + a + Math.E;
+      }
+      return x*x + y*y;
+  };
 
   // Draw function and Event Listeners
   useEffect(() => {
@@ -80,7 +93,7 @@ const ThreeDScatter: React.FC<Props> = ({ points, range, title }) => {
     ctx.beginPath();
     for (let x = -range; x <= range; x += stepSize) {
         for (let y = -range; y <= range; y += stepSize/5) {
-            const z = x*x + y*y;
+            const z = getZ(x, y);
             const p = transform(x, y, z);
             if (y === -range) ctx.moveTo(p.x, p.y);
             else ctx.lineTo(p.x, p.y);
@@ -88,7 +101,7 @@ const ThreeDScatter: React.FC<Props> = ({ points, range, title }) => {
     }
     for (let y = -range; y <= range; y += stepSize) {
         for (let x = -range; x <= range; x += stepSize/5) {
-             const z = x*x + y*y;
+             const z = getZ(x, y);
              const p = transform(x, y, z);
              if (x === -range) ctx.moveTo(p.x, p.y);
              else ctx.lineTo(p.x, p.y);

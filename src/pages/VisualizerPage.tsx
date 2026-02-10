@@ -213,8 +213,16 @@ const VisualizerPage: React.FC = () => {
                             {(algo === 'DE' || algo === 'PSO' || algo === 'ES') && (
                                 <div className="text-xs space-y-1">
                                     {algo === 'ES' && <p className="text-fuchsia-400 font-semibold">Evolution Strategy (ES)</p>}
-                                    {algo !== 'ES' && <p className="text-blue-400 font-semibold">Sphere Function</p>}
-                                    <p className="text-slate-400">Minimize f(x) = &sum; x&sup2;</p>
+                                    {algo === 'PSO' && <p className="text-emerald-400 font-semibold">Particle Swarm (PSO)</p>}
+                                    {algo === 'DE' && <p className="text-blue-400 font-semibold">Differential Evolution (DE)</p>}
+                                    
+                                    <p className="text-white font-bold mt-2">{config.problemType || 'Sphere'} Function</p>
+                                    
+                                    {(!config.problemType || config.problemType === 'Sphere') ? (
+                                        <p className="text-slate-400">Minimize f(x) = &sum; x&sup2;</p>
+                                    ) : (
+                                        <p className="text-slate-400">Min Ackley (Multi-modal)</p>
+                                    )}
                                     <p className="text-slate-400">Range: [-5, 5]</p>
                                     <p className="text-slate-400">Target: 0</p>
                                 </div>

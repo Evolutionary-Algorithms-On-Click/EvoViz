@@ -1,14 +1,15 @@
 import { EAConfig, Population, Individual } from '../utils/common';
-import { calcSphereFitness, randomInt, randomGaussian } from '../utils/functions';
+import { calcSphereFitness, calcAckleyFitness, randomInt, randomGaussian } from '../utils/functions';
 import { ESLogEntry, StepLog } from '../utils/internal-algo-logs';
 
 export const initES = (config: EAConfig): Population => {
+  const calcFitness = config.problemType === 'Ackley' ? calcAckleyFitness : calcSphereFitness;
   return Array.from({ length: config.populationSize }, (_, i) => {
     const genes = Array.from({ length: config.genesCount }, () => randomInt(-5, 5));
     return {
       id: i,
       genes,
-      fitness: calcSphereFitness(genes)
+      fitness: calcFitness(genes)
     };
   });
 };
@@ -21,6 +22,7 @@ export const stepES = (pop: Population, config: EAConfig): { nextPop: Population
   
   const children: Individual[] = [];
   const logs: ESLogEntry[] = [];
+  const calcFitness = config.problemType === 'Ackley' ? calcAckleyFitness : calcSphereFitness;
   
   //  mutate only for canonical simple ES
   pop.forEach((parent, i) => {
@@ -37,7 +39,7 @@ export const stepES = (pop: Population, config: EAConfig): { nextPop: Population
           return val;
       });
 
-      const childFitness = calcSphereFitness(childGenes);
+      const childFitness = calcFitness(childGenes);
       
       children.push({
           id: config.populationSize + i, // Temporary ID
