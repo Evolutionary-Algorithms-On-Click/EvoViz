@@ -33,8 +33,8 @@ const ParticleBackground: React.FC = () => {
       ctx.clearRect(0, 0, width, height);
       
       // Update and Draw Particles
-      ctx.fillStyle = '#64748b'; // slate-500
-      ctx.strokeStyle = '#3b82f6'; // blue-500
+      ctx.fillStyle = '#94a3b8'; // slate-400 (brighter)
+      ctx.strokeStyle = '#60a5fa'; // blue-400 (brighter)
 
       for (let i = 0; i < particleCount; i++) {
         const p = particles[i];
@@ -46,7 +46,7 @@ const ParticleBackground: React.FC = () => {
         if (p.y < 0 || p.y > height) p.vy *= -1;
 
         // Draw particle
-        ctx.globalAlpha = 0.3;
+        ctx.globalAlpha = 0.6; // Increased from 0.3
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
@@ -59,8 +59,8 @@ const ParticleBackground: React.FC = () => {
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < 150) {
-            ctx.globalAlpha = 1 - dist / 150;
-            ctx.lineWidth = 0.5;
+            ctx.globalAlpha = (1 - dist / 150) * 0.8; // Increased visibility
+            ctx.lineWidth = 1.5; // Increased from 0.5
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
@@ -87,7 +87,7 @@ const ParticleBackground: React.FC = () => {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="fixed inset-0 w-full h-full pointer-events-none opacity-20" />;
+  return <canvas ref={canvasRef} className="fixed inset-0 w-full h-full pointer-events-none opacity-40" />;
 };
 
 export default ParticleBackground;
