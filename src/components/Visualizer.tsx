@@ -97,7 +97,7 @@ const Visualizer: React.FC<Props> = ({
   const maximizedHeightClass = 'h-[50vh]';
 
   // Determine which graph is maximized
-  const anyMaximized = errorHistoryMaximized || scatter2DMaximized || scatter3DMaximized;
+  // const anyMaximized = errorHistoryMaximized || scatter2DMaximized || scatter3DMaximized;
 
   return (
     <div className="relative">
