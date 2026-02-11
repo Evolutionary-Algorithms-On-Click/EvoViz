@@ -24,6 +24,11 @@ const VisualizerPage: React.FC = () => {
     const validAlgos: Algorithm[] = ['GA', 'DE', 'PSO', 'GP', 'ES'];
     const algo = (validAlgos.find(a => a === algoParam?.toUpperCase()) || 'GA') as Algorithm;
 
+    // Scroll to top when component mounts or algo changes
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [algo]);
+
     // Redirect if param was invalid (optional, but keeps URL clean)
     useEffect(() => {
         if (algoParam?.toUpperCase() !== algo) {
