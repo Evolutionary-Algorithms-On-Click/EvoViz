@@ -133,17 +133,12 @@ const VisualizerPage: React.FC = () => {
         return () => clearInterval(interval);
     }, [running, gen, step, config.maxGenerations]);
 
-    // Handle completion
+    // Handle completion - auto-stop when reaching max generations
     useEffect(() => {
-        if (gen > 0 && gen >= config.maxGenerations) {
-            const timer = setTimeout(() => {
-                alert("Simulation Finished!");
-                reset();
-                navigate(`/visualizer/${algo.toLowerCase()}`, { replace: true });
-            }, 100);
-            return () => clearTimeout(timer);
+        if (gen >= config.maxGenerations && running) {
+            setRunning(false);
         }
-    }, [gen, config.maxGenerations, algo, navigate, reset]);
+    }, [gen, config.maxGenerations, running]);
 
     const handleAlgoChange = (newAlgo: Algorithm) => {
         navigate(`/visualizer/${newAlgo.toLowerCase()}`);
@@ -151,44 +146,109 @@ const VisualizerPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-slate-900 text-slate-200 p-4 md:p-8 font-sans">
-            <header className="mb-8 py-6 px-6 relative overflow-hidden rounded-3xl border border-white/5 bg-slate-900/50 flex flex-col md:flex-row items-center justify-between gap-6">
-                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+            <header className="mb-8 py-1.5 px-4 relative overflow-visible rounded-3xl border border-white/5 bg-slate-900/50 flex flex-col md:flex-row items-center justify-between gap-2">
+                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none rounded-3xl">
                     <div className="absolute -top-24 -left-24 w-64 h-64 bg-blue-600/10 rounded-full blur-[80px]"></div>
                     <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-emerald-600/10 rounded-full blur-[80px]"></div>
                  </div>
 
-                 <div className="relative z-10 flex items-center gap-6">
-                    <Link to="/" className="group p-3 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 transition-all">
-                        <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-white" />
+                 {/* Left: Back Button and Title */}
+                 <div className="relative z-10 order-1 md:order-none flex items-center gap-3">
+                    <Link to="/" className="group p-2 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 transition-all">
+                        <ArrowLeft className="w-5 h-5 text-slate-300 group-hover:text-white" />
                     </Link>
-                    <div>
-                        <img src={logo} alt="EvoViz" className="h-8 md:h-12 mb-1" />
-                        <p className="text-slate-500 text-sm">Algorithm Visualization Engine</p>
-                    </div>
+                    <p className="text-slate-300 text-sm md:text-base font-medium hidden md:block">Algorithm Visualization Engine</p>
                  </div>
 
-                 {/* Navigation Tabs */}
-                 <div className="relative z-10 flex flex-wrap justify-center gap-2">
-                    {validAlgos.map(a => (
-                        <button
-                            key={a}
-                            onClick={() => handleAlgoChange(a)}
-                            className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
-                                algo === a 
-                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' 
-                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
-                            }`}
-                        >
-                            {a}
-                        </button>
-                    ))}
+                 {/* Center: Logo Only */}
+                 <div className="relative z-10 flex-1 flex items-center justify-center order-2 md:order-none">
+                    <img src={logo} alt="EvoViz" className="h-16 md:h-24" />
+                 </div>
+
+                 {/* Right: Navigation Tabs */}
+                 <div className="relative z-10 flex flex-wrap justify-center gap-2 order-3 md:order-none">
+                    {validAlgos.map((a, index) => {
+                        const algoNames: Record<Algorithm, string> = {
+                            'GA': 'Genetic Algorithm',
+                            'DE': 'Differential Evolution',
+                            'PSO': 'Particle Swarm Optimization',
+                            'GP': 'Genetic Programming',
+                            'ES': 'Evolution Strategies'
+                        };
+                        // Show tooltip above for last 2 buttons (GP, ES) to prevent overflow
+                        const showTooltipAbove = index >= 3;
+                        return (
+                            <button
+                                key={a}
+                                onClick={() => handleAlgoChange(a)}
+                                title={algoNames[a]}
+                                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all relative group ${
+                                    algo === a 
+                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' 
+                                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                                }`}
+                            >
+                                {a}
+                                <span className={`absolute ${showTooltipAbove ? 'bottom-full mb-2' : 'top-full mt-2'} left-1/2 transform -translate-x-1/2 px-3 py-1.5 bg-slate-900 text-slate-200 text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap border border-slate-700 shadow-lg z-50`}>
+                                    {algoNames[a]}
+                                </span>
+                            </button>
+                        );
+                    })}
                  </div>
             </header>
 
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
                 {/* Left Column: Controls & Configuration */}
-                <div className="xl:col-span-1 space-y-6">
-                    <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg xl:sticky xl:top-4">
+                <div className="xl:col-span-1">
+                    <div className="xl:sticky xl:top-4 space-y-6">
+                        {/* Problem Context - Separate Section */}
+                        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+                            <h4 className="text-sm font-bold uppercase text-slate-300 mb-4">Problem Context</h4>
+                            {algo === 'GA' && (
+                                <div className="text-sm space-y-2">
+                                    <p className="text-amber-400 font-semibold text-base">Knapsack Problem</p>
+                                    <p className="text-slate-300">Capacity: <span className="text-amber-400 font-semibold">{config.knapsackCapacity}</span></p>
+                                    <p className="text-slate-400 mt-3 italic text-xs">See item list in configuration above.</p>
+                                </div>
+                            )}
+                            {(algo === 'DE' || algo === 'PSO' || algo === 'ES') && (
+                                <div className="text-sm space-y-2">
+                                    {algo === 'ES' && <p className="text-fuchsia-400 font-semibold text-base">Evolution Strategy (ES)</p>}
+                                    {algo === 'PSO' && <p className="text-emerald-400 font-semibold text-base">Particle Swarm (PSO)</p>}
+                                    {algo === 'DE' && <p className="text-blue-400 font-semibold text-base">Differential Evolution (DE)</p>}
+                                    
+                                    <p className="text-white font-bold mt-3 text-base">{config.problemType || 'Sphere'} Function</p>
+                                    
+                                    {(!config.problemType || config.problemType === 'Sphere') ? (
+                                        <p className="text-slate-300">Minimize <span className="font-mono text-blue-400">f(x) = Σ x²</span></p>
+                                    ) : (
+                                        <p className="text-slate-300">Min Ackley <span className="text-slate-400">(Multi-modal)</span></p>
+                                    )}
+                                    <p className="text-slate-300">Range: <span className="text-emerald-400">[-5, 5]</span></p>
+                                    <p className="text-slate-300">Target: <span className="text-emerald-400 font-semibold">0</span></p>
+                                </div>
+                            )}
+                            {algo === 'GP' && (
+                                <div className="text-sm space-y-2">
+                                    <p className="text-purple-400 font-semibold text-base">Genetic Programming</p>
+                                    {config.gpProblem === 'Linear' ? (
+                                        <>
+                                            <p className="text-slate-300">Find ops to reach <span className="text-purple-400 font-semibold">0</span> from <span className="text-purple-400 font-semibold">50</span>.</p>
+                                            <p className="text-slate-300">Ops: <span className="font-mono text-blue-400">+1, -1, -10, /2</span></p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="text-slate-300">Find <span className="font-mono text-purple-400">f(x)</span> to match <span className="font-mono text-purple-400">sin(x)</span>.</p>
+                                            <p className="text-slate-300">Ops: <span className="font-mono text-blue-400">+x, +1, sin, *2</span></p>
+                                            <p className="text-slate-300">Register Start: <span className="text-purple-400 font-semibold">0</span></p>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
                         <div className="flex justify-between items-center mb-4">
                             <span className="text-sm uppercase tracking-wider text-slate-400">Control Panel</span>
                             <span className={`px-2 py-1 rounded text-xs font-bold ${gen >= config.maxGenerations ? 'bg-red-900 text-red-200' : 'bg-blue-900 text-blue-200'}`}>
@@ -198,16 +258,27 @@ const VisualizerPage: React.FC = () => {
 
                         <div className="flex space-x-2 mb-6">
                             <button
-                                onClick={() => setRunning(!running)}
-                                disabled={gen >= config.maxGenerations}
-                                className={`flex-1 py-2 rounded-lg font-bold transition text-sm ${running ? 'bg-amber-600 hover:bg-amber-500' : 'bg-emerald-600 hover:bg-emerald-500'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                onClick={() => {
+                                    if (gen >= config.maxGenerations) {
+                                        reset();
+                                    } else {
+                                        setRunning(!running);
+                                    }
+                                }}
+                                className={`flex-1 py-2 rounded-lg font-bold transition text-sm ${
+                                    gen >= config.maxGenerations 
+                                        ? 'bg-blue-600 hover:bg-blue-500' 
+                                        : running 
+                                            ? 'bg-amber-600 hover:bg-amber-500' 
+                                            : 'bg-emerald-600 hover:bg-emerald-500'
+                                }`}
                             >
-                                {running ? 'Pause' : 'Start'}
+                                {gen >= config.maxGenerations ? 'Finish' : running ? 'Pause' : 'Start'}
                             </button>
                             <button
                                 onClick={step}
                                 disabled={running || gen >= config.maxGenerations}
-                                className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg font-semibold disabled:opacity-50 text-sm"
+                                className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                             >
                                 Step
                             </button>
@@ -219,52 +290,7 @@ const VisualizerPage: React.FC = () => {
                             </button>
                         </div>
 
-                        <ConfigPanel config={config} setConfig={setConfig} disabled={running || (gen > 0 && gen < config.maxGenerations)} algo={algo} />
-
-                        {/* Problem Context Info */}
-                        <div className="mt-6 pt-4 border-t border-slate-700">
-                            <h4 className="text-xs font-bold uppercase text-slate-400 mb-2">Problem Context</h4>
-                            {algo === 'GA' && (
-                                <div className="text-xs space-y-1">
-                                    <p className="text-amber-400 font-semibold">Knapsack Problem</p>
-                                    <p className="text-slate-400">Capacity: {config.knapsackCapacity}</p>
-                                    <p className="text-slate-500 mt-2 italic">See item list in configuration above.</p>
-                                </div>
-                            )}
-                            {(algo === 'DE' || algo === 'PSO' || algo === 'ES') && (
-                                <div className="text-xs space-y-1">
-                                    {algo === 'ES' && <p className="text-fuchsia-400 font-semibold">Evolution Strategy (ES)</p>}
-                                    {algo === 'PSO' && <p className="text-emerald-400 font-semibold">Particle Swarm (PSO)</p>}
-                                    {algo === 'DE' && <p className="text-blue-400 font-semibold">Differential Evolution (DE)</p>}
-                                    
-                                    <p className="text-white font-bold mt-2">{config.problemType || 'Sphere'} Function</p>
-                                    
-                                    {(!config.problemType || config.problemType === 'Sphere') ? (
-                                        <p className="text-slate-400">Minimize f(x) = &sum; x&sup2;</p>
-                                    ) : (
-                                        <p className="text-slate-400">Min Ackley (Multi-modal)</p>
-                                    )}
-                                    <p className="text-slate-400">Range: [-5, 5]</p>
-                                    <p className="text-slate-400">Target: 0</p>
-                                </div>
-                            )}
-                            {algo === 'GP' && (
-                                <div className="text-xs space-y-1">
-                                    <p className="text-purple-400 font-semibold">Linear GP</p>
-                                    {config.gpProblem === 'Linear' ? (
-                                        <>
-                                            <p className="text-slate-400">Find ops to reach 0 from 50.</p>
-                                            <p className="text-slate-400">Ops: +1, -1, -10, /2</p>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <p className="text-slate-400">Find f(x) to match sin(x).</p>
-                                            <p className="text-slate-400">Ops: +x, +1, sin, *2</p>
-                                            <p className="text-slate-400">Register Start: 0</p>
-                                        </>
-                                    )}
-                                </div>
-                            )}
+                        <ConfigPanel config={config} setConfig={setConfig} disabled={running || gen > 0} algo={algo} />
                         </div>
                     </div>
                 </div>
