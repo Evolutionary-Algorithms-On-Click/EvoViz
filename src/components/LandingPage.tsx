@@ -1,4 +1,4 @@
-import { ArrowDown, Cpu, GitBranch, Globe, Zap, Activity, Dna, Search, Network } from 'lucide-react';
+import { ArrowDown, Cpu, GitBranch, Globe, Zap, Activity, Dna, Search, Network, Github } from 'lucide-react';
 import BackgroundEffect from './BackgroundEffect';
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -14,6 +14,23 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="relative bg-[#0b1121] text-slate-200 font-sans selection:bg-blue-500/30 selection:text-blue-200">
+
+      {/* Fixed GitHub Link Box - Top Right Corner */}
+      <div className="fixed top-4 right-4 md:top-6 md:right-6 z-50">
+        <a
+          href="https://github.com/Astrasv/EvoViz"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group inline-flex items-center gap-2 md:gap-3 px-4 py-2.5 md:px-6 md:py-4 rounded-xl md:rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-sm hover:border-blue-500/40 hover:bg-slate-800/90 transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.2)] hover:shadow-[0_0_25px_rgba(59,130,246,0.3)] cursor-pointer"
+        >
+          <div className="p-1.5 md:p-2 rounded-lg md:rounded-xl bg-slate-950 border border-slate-800 group-hover:bg-blue-600 group-hover:border-blue-500 transition-all duration-300">
+            <Github className="w-4 h-4 md:w-5 md:h-5 text-slate-400 group-hover:text-white transition-colors" />
+          </div>
+          <span className="text-sm md:text-base text-slate-300 group-hover:text-white font-medium transition-colors hidden sm:inline">
+            View on GitHub
+          </span>
+        </a>
+      </div>
 
       {/* Fixed Background - Stays while scrolling */}
       <BackgroundEffect />

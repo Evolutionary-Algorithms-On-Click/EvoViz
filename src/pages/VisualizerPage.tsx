@@ -11,6 +11,7 @@ import PopulationTable from '../components/PopulationTable';
 import Visualizer from '../components/Visualizer';
 import ConfigPanel from '../components/ConfigPanel';
 import StepLogView from '../components/StepLogView';
+import { Github } from 'lucide-react';
 import logo from '../assets/Evo-Viz-Logo.png';
 
 type Algorithm = 'GA' | 'DE' | 'PSO' | 'GP' | 'ES';
@@ -150,6 +151,19 @@ const VisualizerPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-slate-900 text-slate-200 p-4 md:p-8 font-sans">
+            {/* Fixed GitHub Link - Bottom Right Corner */}
+            <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50">
+                <a
+                    href="https://github.com/Astrasv/EvoViz"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group p-3 rounded-xl bg-slate-900/80 border border-slate-800 backdrop-blur-sm hover:border-blue-500/40 hover:bg-slate-800/90 transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.2)] hover:shadow-[0_0_25px_rgba(59,130,246,0.3)] cursor-pointer inline-flex items-center justify-center"
+                    title="View on GitHub"
+                >
+                    <Github className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
+                </a>
+            </div>
+
             <header className="mb-8 py-0.5 px-4 relative overflow-visible rounded-3xl border border-white/5 bg-slate-900/50 flex flex-col md:flex-row items-center justify-between gap-2">
                  <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none rounded-3xl">
                     <div className="absolute -top-24 -left-24 w-64 h-64 bg-blue-600/10 rounded-full blur-[80px]"></div>
