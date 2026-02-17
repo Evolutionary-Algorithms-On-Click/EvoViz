@@ -1,10 +1,21 @@
 # EvoViz - Evolutionary Algorithms Visualization
 
+<p align="center">
+  <img src="assets/Evo-Viz-Logo.png" width="280"/>
+</p>
+
+
+Application is deployed at here. [Use EvoViz Now](https://astrasv.github.io/EvoViz/)
+
 EvoViz is an interactive web-based tool designed to visualize and demonstrate the core mechanics of various Evolutionary Algorithms (EAs). It provides a real-time simulation environment where users can observe how natural selection, mutation, and crossover operations influence optimization processes across different problem domains.
 
 ## Overview
 
 This project serves as an educational and experimental platform to understand Evolutionary Computation concepts. Instead of treating these algorithms as black boxes, EvoViz breaks down their execution, allowing users to step through generations, inspect population states, and analyze convergence behavior through dynamic charts and logs.
+
+<img width="1905" height="1080" alt="image" src="https://github.com/user-attachments/assets/59b44ba8-1e7f-4e21-abae-8829b29d49a5" />
+
+
 
 ## Supported Algorithms and Problems
 
@@ -27,7 +38,7 @@ The application currently supports the following algorithms, each paired with a 
 *   **Step Logs**: Detailed textual logs describing the internal operations performed during each generation (e.g., specific parents selected, mutation events).
 
 
-## Prerequisites
+## DevDocs
 
 Before running the project, ensure you have the following installed:
 
@@ -62,6 +73,12 @@ To build the project for production deployment:
 
 ```bash
 npm run build
+```
+
+To deploy the project :
+
+```bash
+npm run deploy
 ```
 
 To preview the production build locally:
