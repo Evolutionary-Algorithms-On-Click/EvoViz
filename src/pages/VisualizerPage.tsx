@@ -11,8 +11,7 @@ import PopulationTable from '../components/PopulationTable';
 import Visualizer from '../components/Visualizer';
 import ConfigPanel from '../components/ConfigPanel';
 import StepLogView from '../components/StepLogView';
-import { Github } from 'lucide-react';
-import logo from '../assets/Evo-Viz-Logo.png';
+import { Github, ArrowLeft } from 'lucide-react';
 
 type Algorithm = 'GA' | 'DE' | 'PSO' | 'GP' | 'ES';
 
@@ -151,39 +150,45 @@ const VisualizerPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-slate-900 text-slate-200 p-4 md:p-8 font-sans">
-            {/* Fixed GitHub Link - Bottom Right Corner */}
-            <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50">
-                <a
-                    href="https://github.com/Astrasv/EvoViz"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group p-3 rounded-xl bg-slate-900/80 border border-slate-800 backdrop-blur-sm hover:border-blue-500/40 hover:bg-slate-800/90 transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.2)] hover:shadow-[0_0_25px_rgba(59,130,246,0.3)] cursor-pointer inline-flex items-center justify-center"
-                    title="View on GitHub"
-                >
-                    <Github className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
-                </a>
-            </div>
-
-            <header className="mb-8 py-0.5 px-4 relative overflow-visible rounded-3xl border border-white/5 bg-slate-900/50 flex flex-col md:flex-row items-center justify-between gap-2">
+            <header className="mb-8 py-2 px-2 sm:px-4 relative overflow-visible rounded-3xl border border-white/5 bg-slate-900/50 flex flex-col sm:grid sm:grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
                  <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none rounded-3xl">
                     <div className="absolute -top-24 -left-24 w-64 h-64 bg-blue-600/10 rounded-full blur-[80px]"></div>
                     <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-emerald-600/10 rounded-full blur-[80px]"></div>
                  </div>
 
-                 {/* Left: Logo */}
-                 <div className="relative z-10 order-1 md:order-none flex items-center -my-1">
-                    <Link to="/" className="cursor-pointer hover:opacity-80 transition-opacity block">
-                        <img src={logo} alt="EvoViz" className="h-20 md:h-28 block" />
+                 {/* Mobile: Top row with back arrow and GitHub */}
+                 <div className="relative z-10 w-full flex justify-between items-center sm:hidden">
+                    <Link
+                        to="/"
+                        className="group p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 backdrop-blur-sm hover:border-blue-500/40 hover:bg-slate-800/90 transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.2)] hover:shadow-[0_0_25px_rgba(59,130,246,0.3)] cursor-pointer inline-flex items-center justify-center"
+                        title="Back to Home"
+                    >
+                        <ArrowLeft className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
+                    </Link>
+                    <a
+                        href="https://github.com/Astrasv/EvoViz"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 backdrop-blur-sm hover:border-blue-500/40 hover:bg-slate-800/90 transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.2)] hover:shadow-[0_0_25px_rgba(59,130,246,0.3)] cursor-pointer inline-flex items-center justify-center"
+                        title="View on GitHub"
+                    >
+                        <Github className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
+                    </a>
+                 </div>
+
+                 {/* Desktop: Left: Back Arrow */}
+                 <div className="relative z-10 hidden sm:flex items-center justify-start">
+                    <Link
+                        to="/"
+                        className="group p-3 rounded-xl bg-slate-900/80 border border-slate-800 backdrop-blur-sm hover:border-blue-500/40 hover:bg-slate-800/90 transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.2)] hover:shadow-[0_0_25px_rgba(59,130,246,0.3)] cursor-pointer inline-flex items-center justify-center"
+                        title="Back to Home"
+                    >
+                        <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
                     </Link>
                  </div>
 
-                 {/* Center: Title */}
-                 <div className="relative z-10 w-full md:flex-1 flex items-center justify-center order-2 md:order-none">
-                    <p className="text-slate-300 text-lg md:text-xl font-bold text-center">Algorithm Visualization Engine</p>
-                 </div>
-
-                 {/* Right: Navigation Tabs */}
-                 <div className="relative z-10 flex flex-wrap justify-center gap-2 order-3 md:order-none">
+                 {/* Center: Navigation Tabs - Grouped as single component */}
+                 <div className="relative z-10 flex gap-1.5 sm:gap-2 overflow-x-auto w-full sm:w-auto justify-center sm:justify-start scrollbar-hide">
                     {validAlgos.map((a, index) => {
                         const algoNames: Record<Algorithm, string> = {
                             'GA': 'Genetic Algorithm',
@@ -199,19 +204,32 @@ const VisualizerPage: React.FC = () => {
                                 key={a}
                                 onClick={() => handleAlgoChange(a)}
                                 title={algoNames[a]}
-                                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all relative group ${
+                                className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-bold text-xs sm:text-sm transition-all relative group whitespace-nowrap flex-shrink-0 ${
                                     algo === a 
                                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' 
                                     : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
                                 }`}
                             >
                                 {a}
-                                <span className={`absolute ${showTooltipAbove ? 'bottom-full mb-2' : 'top-full mt-2'} left-1/2 transform -translate-x-1/2 px-3 py-1.5 bg-slate-900 text-slate-200 text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap border border-slate-700 shadow-lg z-50`}>
+                                <span className={`hidden sm:block absolute ${showTooltipAbove ? 'bottom-full mb-2' : 'top-full mt-2'} left-1/2 transform -translate-x-1/2 px-3 py-1.5 bg-slate-900 text-slate-200 text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap border border-slate-700 shadow-lg z-50`}>
                                     {algoNames[a]}
                                 </span>
                             </button>
                         );
                     })}
+                 </div>
+
+                 {/* Desktop: Right: GitHub Link */}
+                 <div className="relative z-10 hidden sm:flex items-center justify-end">
+                    <a
+                        href="https://github.com/Astrasv/EvoViz"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group p-3 rounded-xl bg-slate-900/80 border border-slate-800 backdrop-blur-sm hover:border-blue-500/40 hover:bg-slate-800/90 transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.2)] hover:shadow-[0_0_25px_rgba(59,130,246,0.3)] cursor-pointer inline-flex items-center justify-center"
+                        title="View on GitHub"
+                    >
+                        <Github className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
+                    </a>
                  </div>
             </header>
 
