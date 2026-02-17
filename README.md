@@ -5,7 +5,7 @@
 </p>
 
 
-Application is deployed at here. [Use EvoViz Now](https://astrasv.github.io/EvoViz/)
+Application is deployed at here. [Use EvoViz Now](https://evolutionary-algorithms-on-click.github.io/EvoViz/)
 
 EvoViz is an interactive web-based tool designed to visualize and demonstrate the core mechanics of various Evolutionary Algorithms (EAs). It provides a real-time simulation environment where users can observe how natural selection, mutation, and crossover operations influence optimization processes across different problem domains.
 
