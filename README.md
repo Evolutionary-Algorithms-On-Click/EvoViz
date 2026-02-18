@@ -94,3 +94,7 @@ The project also contains a CLI entry point (`main_cli.ts`) for running algorith
 ```bash
 npm start
 ```
+
+## Contributing
+
+Interested in adding a new evolutionary algorithm to EvoViz? Check out our [Contributing Guide](CONTRIBUTING.md) for detailed instructions on how to add new algorithms to the platform.

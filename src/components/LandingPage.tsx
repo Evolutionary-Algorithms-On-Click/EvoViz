@@ -1,8 +1,9 @@
-import { ArrowDown, Cpu, GitBranch, Globe, Zap, Activity, Dna, Search, Network, Github } from 'lucide-react';
+import { ArrowDown, Dna, Search, Network, Github, Activity } from 'lucide-react';
 import BackgroundEffect from './BackgroundEffect';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../assets/Evo-Viz-Logo.png';
+import { ALGORITHMS } from '../config/algorithms';
 
 const LandingPage: React.FC = () => {
   const scrollToSection = (id: string) => {
@@ -11,6 +12,12 @@ const LandingPage: React.FC = () => {
       element.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  // Calculate layout for incomplete rows
+  const totalAlgorithms = ALGORITHMS.length;
+  const itemsPerRow = 3; // 3 items per row for tablet/PC
+  const remaining = totalAlgorithms % itemsPerRow;
+  const startIncompleteRow = remaining > 0 ? totalAlgorithms - remaining : -1;
 
   return (
     <div className="relative bg-[#0b1121] text-slate-200 font-sans selection:bg-blue-500/30 selection:text-blue-200">
@@ -118,67 +125,61 @@ const LandingPage: React.FC = () => {
             <span className="overflow-visible">Select Your Algorithm</span>
           </h2>
 
-          {/* Responsive grid that adapts beautifully to all screen sizes */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 text-left justify-items-stretch sm:justify-items-center">
-            <AlgoCard
-              id="GA"
-              title="Genetic Algorithm"
-              desc="The OG of evolution. Uses binary genes, crossover (mating), and mutation to pack the perfect backpack. It's Darwinism, but for math problems."
-              icon={<Cpu />}
-              color="blue"
-            />
-            <AlgoCard
-              id="DE"
-              title="Differential Evolution"
-              desc="Vector calculus meets survival. It uses differences between agents to drive mutation. Excellent for continuous functions and impressing your math professor."
-              icon={<Zap />}
-              color="amber"
-            />
-            <AlgoCard
-              id="PSO"
-              title="Particle Swarm"
-              desc="Bird flocking simulator. Particles fly through search space, remembering their best spots and gossiping with neighbors about theirs. No actual birds harmed."
-              icon={<Globe />}
-              color="emerald"
-            />
-            {/* GP: Natural flow on tablets, repositioned on desktop */}
-            <div className="lg:hidden">
-              <AlgoCard
-                id="GP"
-                title="Genetic Programming"
-                desc="Evolution writing code. We breed syntax trees that eventually (hopefully) solve the equation. It's like infinite monkeys with typewriters, but optimized."
-                icon={<GitBranch />}
-                color="purple"
-              />
-            </div>
-            {/* ES: Centered on tablets, repositioned on desktop */}
-            <div className="col-span-1 sm:col-span-2 sm:flex sm:justify-center lg:hidden">
-              <AlgoCard
-                id="ES"
-                title="Evolution Strategies"
-                desc="The self-optimizing optimizer. It adapts its own mutation rates (Sigma) on the fly. It learns how to learn. Meta, right?"
-                icon={<Activity />}
-                color="fuchsia"
-                className="sm:max-w-sm"
-              />
-            </div>
-            {/* Desktop: GP and ES centered together */}
-            <div className="hidden lg:col-span-3 lg:flex lg:justify-center lg:gap-6 md:gap-8">
-              <AlgoCard
-                id="GP"
-                title="Genetic Programming"
-                desc="Evolution writing code. We breed syntax trees that eventually (hopefully) solve the equation. It's like infinite monkeys with typewriters, but optimized."
-                icon={<GitBranch />}
-                color="purple"
-              />
-              <AlgoCard
-                id="ES"
-                title="Evolution Strategies"
-                desc="The self-optimizing optimizer. It adapts its own mutation rates (Sigma) on the fly. It learns how to learn. Meta, right?"
-                icon={<Activity />}
-                color="fuchsia"
-              />
-            </div>
+          {/* Responsive grid: Mobile/Tablet (1 col below 900px), PC (3 cols above 900px with centered incomplete row) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 justify-items-center items-stretch">
+            {/* Render all algorithms */}
+            {ALGORITHMS.map((algo, index) => {
+              const IconComponent = algo.icon;
+              
+              // Check if we're starting an incomplete row (1 or 2 items remaining)
+              const isStartOfIncompleteRow = remaining > 0 && remaining < 3 && index === startIncompleteRow;
+              const isInIncompleteRow = remaining > 0 && remaining < 3 && index >= startIncompleteRow;
+              
+              if (isStartOfIncompleteRow) {
+                // Render incomplete row items together in a centered container
+                // On mobile: stack vertically and center, On tablet/PC: keep side-by-side
+                const incompleteItems = ALGORITHMS.slice(index);
+                return (
+                  <div 
+                    key={`incomplete-row-${index}`}
+                    className="col-span-1 md:col-span-3 flex flex-col md:flex-row justify-center items-stretch gap-4 sm:gap-6 md:gap-8 w-full h-full"
+                  >
+                    {incompleteItems.map((incompleteAlgo) => {
+                      const IncompleteIconComponent = incompleteAlgo.icon;
+                      return (
+                        <AlgoCard
+                          key={incompleteAlgo.id}
+                          id={incompleteAlgo.id}
+                          title={incompleteAlgo.fullName}
+                          desc={incompleteAlgo.description}
+                          icon={<IncompleteIconComponent />}
+                          color={incompleteAlgo.color}
+                          className="w-full max-w-sm md:w-[calc((100%-2*2rem)/3)] md:max-w-none mx-auto md:mx-0 h-full"
+                        />
+                      );
+                    })}
+                  </div>
+                );
+              }
+              
+              // Skip items that are part of incomplete row (they're rendered above)
+              if (isInIncompleteRow) {
+                return null;
+              }
+              
+              // Render normal grid items (complete rows of 3)
+              return (
+                <AlgoCard
+                  key={algo.id}
+                  id={algo.id}
+                  title={algo.fullName}
+                  desc={algo.description}
+                  icon={<IconComponent />}
+                  color={algo.color}
+                  className="w-full max-w-sm md:w-full md:max-w-none mx-auto md:mx-0 h-full"
+                />
+              );
+            })}
           </div>
 
           <footer className="mt-32 text-slate-600 text-sm font-medium border-t border-slate-800/50 pt-8">
@@ -253,7 +254,7 @@ const AlgoCard = ({ id, title, desc, icon, color, className = "" }: any) => {
   return (
     <Link
       to={`/visualizer/${id.toLowerCase()}`}
-      className={`group text-left p-6 sm:p-8 rounded-2xl sm:rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-md transition-all duration-500 hover:-translate-y-2 sm:hover:-translate-y-3 relative overflow-hidden w-full max-w-sm ${c.border} ${c.bg} ${c.shadow} block ${className}`}
+      className={`group text-left p-6 sm:p-8 rounded-2xl sm:rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-md transition-all duration-500 hover:-translate-y-2 sm:hover:-translate-y-3 relative overflow-hidden flex flex-col min-h-[280px] sm:min-h-[320px] ${c.border} ${c.bg} ${c.shadow} ${className}`}
     >
       {/* Inner Glow Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
@@ -267,7 +268,7 @@ const AlgoCard = ({ id, title, desc, icon, color, className = "" }: any) => {
         </div>
       </div>
 
-      <div className="relative z-10">
+      <div className="relative z-10 flex-grow">
         <h3 className={`text-xl sm:text-2xl font-bold text-slate-200 mb-2 sm:mb-3 transition-colors duration-300 ${c.text}`}>
           {title}
         </h3>
@@ -276,7 +277,7 @@ const AlgoCard = ({ id, title, desc, icon, color, className = "" }: any) => {
         </p>
       </div>
 
-      <div className="mt-8 flex items-center text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 text-slate-400 group-hover:text-white">
+      <div className="mt-auto flex items-center text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 text-slate-400 group-hover:text-white">
         
       </div>
     </Link>

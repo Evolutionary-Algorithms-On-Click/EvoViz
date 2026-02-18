@@ -2,18 +2,20 @@ import React from 'react';
 import { Individual, EAConfig } from '../utils/common';
 import { KnapsackItem } from '../data/knapsack';
 import { decodeGP } from '../algorithms/gp';
+import { getAlgorithmConfig, AlgorithmId } from '../config/algorithms';
 
 interface Props {
   population: Individual[];
-  algo: string;
+  algo: AlgorithmId;
   knapsackItems: KnapsackItem[];
   knapsackCapacity: number;
   config?: EAConfig;
 }
 
 const PopulationTable: React.FC<Props> = ({ population, algo, knapsackItems, knapsackCapacity, config }) => {
+  const algoConfig = getAlgorithmConfig(algo)!;
   const isGP = algo === 'GP';
-  const isGA = algo === 'GA'; // Knapsack
+  const isGA = algoConfig.visualizationType === 'knapsack';
 
   const getKnapsackDetails = (genes: number[]) => {
       let w = 0;
