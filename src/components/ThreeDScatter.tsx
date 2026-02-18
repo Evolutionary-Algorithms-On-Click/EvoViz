@@ -198,164 +198,263 @@ const ThreeDScatter: React.FC<Props> = ({ points, range, title, functionType = '
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    
+    // Get context with error handling
+    let ctx = canvas.getContext('2d');
+    if (!ctx) {
+      // Try to get context again if it failed
+      ctx = canvas.getContext('2d');
+      if (!ctx) return;
+    }
 
-    // Handle high DPI and resizing
+    // Track last size to prevent unnecessary redraws
+    let lastWidth = 0;
+    let lastHeight = 0;
+    let rafId: number | null = null;
+
+    // Handle high DPI and resizing with validation
     const handleResize = () => {
         const parent = canvas.parentElement;
-        if (parent) {
-            const dpr = window.devicePixelRatio || 1;
-            const rect = parent.getBoundingClientRect();
-            
-            canvas.style.width = `${rect.width}px`;
-            canvas.style.height = `${rect.height}px`;
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
-            ctx.scale(dpr, dpr);
+        if (!parent) return;
+        
+        const dpr = window.devicePixelRatio || 1;
+        const rect = parent.getBoundingClientRect();
+        
+        // Validate dimensions before setting
+        if (rect.width <= 0 || rect.height <= 0 || !isFinite(rect.width) || !isFinite(rect.height)) {
+            return; // Skip resize if dimensions are invalid
         }
+        
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        
+        // Re-get context after resize (context may be lost)
+        ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        ctx.scale(dpr, dpr);
     };
     
+    // Initial resize with validation
     handleResize();
-
-    const width = parseFloat(canvas.style.width);
-    const height = parseFloat(canvas.style.height);
-    const cx = width / 2 + pan.x;
-    const cy = height / 2 + pan.y;
-
-    ctx.clearRect(0, 0, width, height);
-    const scale = (Math.min(width, height) / (range * 2)) * zoom; 
     
-    const project = (x: number, y: number, z: number) => {
-        const x1 = x * Math.cos(rotation.y) - z * Math.sin(rotation.y);
-        const z1 = x * Math.sin(rotation.y) + z * Math.cos(rotation.y);
-        const y2 = y * Math.cos(rotation.x) - z1 * Math.sin(rotation.x);
-        const z2 = y * Math.sin(rotation.x) + z1 * Math.cos(rotation.x);
-        return { x: cx + x1 * scale, y: cy + y2 * scale, z: z2 };
-    };
-
-    const transform = (dx: number, dy: number, dz: number) => {
-        const wx = dx;
-        const wz = dy; 
-        const wy = -dz * 0.2;
-        return project(wx, wy, wz);
-    };
-
-    // Calculate min/max values for color mapping
-    const steps = 50; // Higher resolution for smoother heatmap
-    const stepSize = (range * 2) / steps;
-    let minVal = Infinity;
-    let maxVal = -Infinity;
-    
-    // Sample function values to find min/max
-    for (let x = -range; x <= range; x += stepSize) {
-        for (let y = -range; y <= range; y += stepSize) {
-            const z = getZ(x, y);
-            minVal = Math.min(minVal, z);
-            maxVal = Math.max(maxVal, z);
+    // Drawing function extracted for reuse (defined before ResizeObserver)
+    const draw = () => {
+        // Re-validate context (may be lost on mobile)
+        const context = canvas.getContext('2d');
+        if (!context) return;
+        
+        const parent = canvas.parentElement;
+        if (!parent) return;
+        
+        const rect = parent.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+        
+        // Validate dimensions before drawing
+        if (width <= 0 || height <= 0 || !isFinite(width) || !isFinite(height)) {
+            return; // Skip drawing if dimensions are invalid
         }
-    }
-
-    // Draw heatmap surface with filled quads
-    const quadSize = stepSize;
-    const quads: Array<{ points: Array<{ x: number, y: number, z: number }>, color: string, avgZ: number }> = [];
-    
-    for (let x = -range; x < range; x += quadSize) {
-        for (let y = -range; y < range; y += quadSize) {
-            // Get four corners of the quad
-            const z1 = getZ(x, y);
-            const z2 = getZ(x + quadSize, y);
-            const z3 = getZ(x + quadSize, y + quadSize);
-            const z4 = getZ(x, y + quadSize);
-            
-            const avgZ = (z1 + z2 + z3 + z4) / 4;
-            
-            const p1 = transform(x, y, z1);
-            const p2 = transform(x + quadSize, y, z2);
-            const p3 = transform(x + quadSize, y + quadSize, z3);
-            const p4 = transform(x, y + quadSize, z4);
-            
-            // Calculate center point for better depth sorting
-            const centerX = (x + x + quadSize) / 2;
-            const centerY = (y + y + quadSize) / 2;
-            const centerZ = getZ(centerX, centerY);
-            const centerP = transform(centerX, centerY, centerZ);
-            
-            // Use center z for depth sorting (more accurate)
-            const depthZ = centerP.z;
-            
-            quads.push({
-                points: [p1, p2, p3, p4],
-                color: valueToColor(avgZ, minVal, maxVal, 1.0),
-                avgZ: depthZ
-            });
+        
+        // Ensure canvas dimensions match container
+        const currentWidth = parseFloat(canvas.style.width) || 0;
+        const currentHeight = parseFloat(canvas.style.height) || 0;
+        
+        let ctx = context;
+        
+        // Only resize if dimensions actually changed significantly
+        if (Math.abs(currentWidth - width) > 1 || Math.abs(currentHeight - height) > 1) {
+            handleResize();
+            const resizedContext = canvas.getContext('2d');
+            if (!resizedContext) return;
+            ctx = resizedContext;
         }
-    }
+        
+        const cx = width / 2 + pan.x;
+        const cy = height / 2 + pan.y;
+
+        ctx.clearRect(0, 0, width, height);
+        const scale = (Math.min(width, height) / (range * 2)) * zoom;
     
-    // Sort quads by depth (back to front) - more accurate sorting
-    quads.sort((a, b) => b.avgZ - a.avgZ);
-    
-    // Draw quads - colors already have transparency built in
-    quads.forEach(quad => {
-        ctx.fillStyle = quad.color;
+        const project = (x: number, y: number, z: number) => {
+            const x1 = x * Math.cos(rotation.y) - z * Math.sin(rotation.y);
+            const z1 = x * Math.sin(rotation.y) + z * Math.cos(rotation.y);
+            const y2 = y * Math.cos(rotation.x) - z1 * Math.sin(rotation.x);
+            const z2 = y * Math.sin(rotation.x) + z1 * Math.cos(rotation.x);
+            return { x: cx + x1 * scale, y: cy + y2 * scale, z: z2 };
+        };
+
+        const transform = (dx: number, dy: number, dz: number) => {
+            const wx = dx;
+            const wz = dy; 
+            const wy = -dz * 0.2;
+            return project(wx, wy, wz);
+        };
+
+        // Calculate min/max values for color mapping
+        const steps = 50; // Higher resolution for smoother heatmap
+        const stepSize = (range * 2) / steps;
+        let minVal = Infinity;
+        let maxVal = -Infinity;
+        
+        // Sample function values to find min/max
+        for (let x = -range; x <= range; x += stepSize) {
+            for (let y = -range; y <= range; y += stepSize) {
+                const z = getZ(x, y);
+                minVal = Math.min(minVal, z);
+                maxVal = Math.max(maxVal, z);
+            }
+        }
+
+        // Draw heatmap surface with filled quads
+        const quadSize = stepSize;
+        const quads: Array<{ points: Array<{ x: number, y: number, z: number }>, color: string, avgZ: number }> = [];
+        
+        for (let x = -range; x < range; x += quadSize) {
+            for (let y = -range; y < range; y += quadSize) {
+                // Get four corners of the quad
+                const z1 = getZ(x, y);
+                const z2 = getZ(x + quadSize, y);
+                const z3 = getZ(x + quadSize, y + quadSize);
+                const z4 = getZ(x, y + quadSize);
+                
+                const avgZ = (z1 + z2 + z3 + z4) / 4;
+                
+                const p1 = transform(x, y, z1);
+                const p2 = transform(x + quadSize, y, z2);
+                const p3 = transform(x + quadSize, y + quadSize, z3);
+                const p4 = transform(x, y + quadSize, z4);
+                
+                // Calculate center point for better depth sorting
+                const centerX = (x + x + quadSize) / 2;
+                const centerY = (y + y + quadSize) / 2;
+                const centerZ = getZ(centerX, centerY);
+                const centerP = transform(centerX, centerY, centerZ);
+                
+                // Use center z for depth sorting (more accurate)
+                const depthZ = centerP.z;
+                
+                quads.push({
+                    points: [p1, p2, p3, p4],
+                    color: valueToColor(avgZ, minVal, maxVal, 1.0),
+                    avgZ: depthZ
+                });
+            }
+        }
+        
+        // Sort quads by depth (back to front) - more accurate sorting
+        quads.sort((a, b) => b.avgZ - a.avgZ);
+        
+        // Draw quads - colors already have transparency built in
+        quads.forEach(quad => {
+            ctx.fillStyle = quad.color;
+            ctx.beginPath();
+            ctx.moveTo(quad.points[0].x, quad.points[0].y);
+            ctx.lineTo(quad.points[1].x, quad.points[1].y);
+            ctx.lineTo(quad.points[2].x, quad.points[2].y);
+            ctx.lineTo(quad.points[3].x, quad.points[3].y);
+            ctx.closePath();
+            ctx.fill();
+        });
+
+        // Draw wireframe grid on top for better visibility
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 0.5;
+        const gridSteps = 10;
+        const gridStepSize = (range * 2) / gridSteps;
+        
         ctx.beginPath();
-        ctx.moveTo(quad.points[0].x, quad.points[0].y);
-        ctx.lineTo(quad.points[1].x, quad.points[1].y);
-        ctx.lineTo(quad.points[2].x, quad.points[2].y);
-        ctx.lineTo(quad.points[3].x, quad.points[3].y);
-        ctx.closePath();
-        ctx.fill();
-    });
-
-    // Draw wireframe grid on top for better visibility
-    ctx.strokeStyle = '#334155';
-    ctx.lineWidth = 0.5;
-    const gridSteps = 10;
-    const gridStepSize = (range * 2) / gridSteps;
-    
-    ctx.beginPath();
-    for (let x = -range; x <= range; x += gridStepSize) {
-        for (let y = -range; y <= range; y += gridStepSize/5) {
-            const z = getZ(x, y);
-            const p = transform(x, y, z);
-            if (y === -range) ctx.moveTo(p.x, p.y);
-            else ctx.lineTo(p.x, p.y);
+        for (let x = -range; x <= range; x += gridStepSize) {
+            for (let y = -range; y <= range; y += gridStepSize/5) {
+                const z = getZ(x, y);
+                const p = transform(x, y, z);
+                if (y === -range) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            }
         }
-    }
-    for (let y = -range; y <= range; y += gridStepSize) {
-        for (let x = -range; x <= range; x += gridStepSize/5) {
-             const z = getZ(x, y);
-             const p = transform(x, y, z);
-             if (x === -range) ctx.moveTo(p.x, p.y);
-             else ctx.lineTo(p.x, p.y);
+        for (let y = -range; y <= range; y += gridStepSize) {
+            for (let x = -range; x <= range; x += gridStepSize/5) {
+                 const z = getZ(x, y);
+                 const p = transform(x, y, z);
+                 if (x === -range) ctx.moveTo(p.x, p.y);
+                 else ctx.lineTo(p.x, p.y);
+            }
         }
-    }
-    ctx.stroke();
-
-    // 2. Draw Points with contrasting colors and outline (using animated positions)
-    animatedPointsRef.current.forEach(pt => {
-        const p = transform(pt.x, pt.y, pt.z);
-        const radius = 3 * Math.sqrt(zoom);
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-        // Draw outline for better visibility
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 1.5;
         ctx.stroke();
-        // Draw filled point
-        ctx.fillStyle = pt.color;
+
+        // 2. Draw Points with contrasting colors and outline (using animated positions)
+        animatedPointsRef.current.forEach(pt => {
+            const p = transform(pt.x, pt.y, pt.z);
+            const radius = 3 * Math.sqrt(zoom);
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+            // Draw outline for better visibility
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            // Draw filled point
+            ctx.fillStyle = pt.color;
+            ctx.fill();
+        });
+
+        // 3. Draw Target
+        const center = transform(0, 0, 0);
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, 4 * Math.sqrt(zoom), 0, Math.PI * 2);
         ctx.fill();
+    };
+    
+    // Batched draw function to prevent excessive redraws
+    const scheduleDraw = () => {
+        if (rafId !== null) {
+            cancelAnimationFrame(rafId);
+        }
+        rafId = requestAnimationFrame(() => {
+            draw();
+            rafId = null;
+        });
+    };
+    
+    // Use ResizeObserver for reliable container size tracking
+    const resizeObserver = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        
+        const { width, height } = entry.contentRect;
+        
+        // Only trigger if size actually changed significantly (more than 2px to avoid rounding issues)
+        if (Math.abs(width - lastWidth) > 2 || Math.abs(height - lastHeight) > 2) {
+            lastWidth = width;
+            lastHeight = height;
+            handleResize();
+            scheduleDraw();
+        }
     });
+    
+    const container = containerRef.current;
+    if (container) {
+        resizeObserver.observe(container);
+        // Initialize last size
+        const rect = container.getBoundingClientRect();
+        lastWidth = rect.width;
+        lastHeight = rect.height;
+    }
+    
+    // Initial draw with requestAnimationFrame to ensure dimensions are ready
+    scheduleDraw();
 
-    // 3. Draw Target
-    const center = transform(0, 0, 0);
-    ctx.fillStyle = '#10b981';
-    ctx.beginPath();
-    ctx.arc(center.x, center.y, 4 * Math.sqrt(zoom), 0, Math.PI * 2);
-    ctx.fill();
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    // Cleanup
+    return () => {
+        if (rafId !== null) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+        }
+        resizeObserver.disconnect();
+        window.removeEventListener('resize', handleResize);
+    };
   }, [points, range, rotation, zoom, pan, functionType, animationTick]);
 
   // Native wheel listener to prevent default scroll
