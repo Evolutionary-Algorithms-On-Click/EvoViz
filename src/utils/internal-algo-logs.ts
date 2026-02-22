@@ -1,4 +1,6 @@
-export type LogType = 'GA' | 'DE' | 'PSO' | 'GP' | 'ES';
+import { AlgorithmId } from '../config/algorithms';
+
+export type LogType = AlgorithmId;
 
 export interface BaseLogEntry {
   id: number;

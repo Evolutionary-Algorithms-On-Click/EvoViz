@@ -3,12 +3,13 @@ import { EAConfig } from '../utils/common';
 import { KnapsackItem } from '../data/knapsack';
 import { GPOpType, GPOperation } from '../data/gp-ops';
 import { Settings, Plus, Trash2 } from 'lucide-react';
+import { getAlgorithmConfig, AlgorithmId } from '../config/algorithms';
 
 interface Props {
   config: EAConfig;
   setConfig: React.Dispatch<React.SetStateAction<EAConfig>>;
   disabled: boolean;
-  algo: string;
+  algo: AlgorithmId;
 }
 
 const AVAILABLE_OPS: { type: GPOpType; label: string }[] = [
@@ -24,6 +25,7 @@ const AVAILABLE_OPS: { type: GPOpType; label: string }[] = [
 ];
 
 const ConfigPanel: React.FC<Props> = ({ config, setConfig, disabled, algo }) => {
+  const algoConfig = getAlgorithmConfig(algo)!;
   const [newItemName, setNewItemName] = useState('New');
   const [newItemWeight, setNewItemWeight] = useState(2);
   const [newItemValue, setNewItemValue] = useState(10);
@@ -121,9 +123,9 @@ const ConfigPanel: React.FC<Props> = ({ config, setConfig, disabled, algo }) => 
             <label className="block text-xs font-semibold text-slate-500 uppercase">Genes / Items</label>
             <input 
                 type="number" 
-                value={algo === 'GA' ? config.knapsackItems.length : config.genesCount}
+                value={algoConfig.configSections.knapsackParams ? config.knapsackItems.length : config.genesCount}
                 disabled={true} 
-                title={algo === 'GA' ? "Determined by Item Count" : "Fixed for Sphere/GP"}
+                title={algoConfig.configSections.knapsackParams ? "Determined by Item Count" : "Fixed for Sphere/GP"}
                 className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm text-slate-500 cursor-not-allowed"
             />
         </div>
@@ -143,7 +145,7 @@ const ConfigPanel: React.FC<Props> = ({ config, setConfig, disabled, algo }) => 
         </div>
 
         {/* Problem Selection for Real-Valued Algos */}
-        {(algo === 'DE' || algo === 'PSO' || algo === 'ES') && (
+        {algoConfig.hasProblemSelector && (
             <div className="space-y-2">
                 <label className={`block text-xs font-semibold uppercase ${disabled ? 'text-slate-600' : 'text-slate-500'}`}>Problem Function</label>
                 <div className={`flex p-1 rounded ${disabled ? 'bg-slate-900/50 opacity-50 cursor-not-allowed' : 'bg-slate-900'}`}>
@@ -168,12 +170,12 @@ const ConfigPanel: React.FC<Props> = ({ config, setConfig, disabled, algo }) => 
         )}
 
         {/* GA/DE/GP Params */}
-        {(algo === 'GA' || algo === 'DE' || algo === 'GP') && (
+        {algoConfig.configSections.evolutionParams && (
             <>
                 <div className="col-span-2 border-t border-slate-700 pt-2 mt-2">
                     <p className={`text-xs mb-2 font-bold ${disabled ? 'text-blue-400/50' : 'text-blue-400'}`}>Evolution Parameters</p>
                 </div>
-                {algo === 'DE' && (
+                {algoConfig.configSections.deParams && (
                     <div className="space-y-2">
                         <label className={`block text-xs font-semibold uppercase ${disabled ? 'text-slate-600' : 'text-slate-500'}`}>Diff Weight (F)</label>
                         <input 
@@ -189,7 +191,7 @@ const ConfigPanel: React.FC<Props> = ({ config, setConfig, disabled, algo }) => 
                         />
                     </div>
                 )}
-                {algo === 'GP' && (
+                {algoConfig.configSections.gpParams && (
                     <div className="col-span-2 space-y-2">
                         <label className={`block text-xs font-semibold uppercase ${disabled ? 'text-slate-600' : 'text-slate-500'}`}>GP Problem</label>
                         <div className={`flex p-1 rounded ${disabled ? 'bg-slate-900/50 opacity-50 cursor-not-allowed' : 'bg-slate-900'}`}>
@@ -260,7 +262,7 @@ const ConfigPanel: React.FC<Props> = ({ config, setConfig, disabled, algo }) => 
         )}
 
         {/* GP Operation Editor */}
-        {algo === 'GP' && (
+        {algoConfig.configSections.gpParams && (
              <div className="col-span-2 border-t border-slate-700 pt-2 mt-2">
                 <div className="flex justify-between items-center mb-2">
                     <p className="text-xs text-purple-400 font-bold">GP Operations ({config.gpOperations.length}/5)</p>
@@ -309,7 +311,7 @@ const ConfigPanel: React.FC<Props> = ({ config, setConfig, disabled, algo }) => 
         )}
 
         {/* PSO Params */}
-        {algo === 'PSO' && (
+        {algoConfig.configSections.psoParams && (
             <>
                 <div className="col-span-2 border-t border-slate-700 pt-2 mt-2">
                     <p className={`text-xs mb-2 font-bold ${disabled ? 'text-emerald-400/50' : 'text-emerald-400'}`}>PSO Parameters</p>
@@ -360,7 +362,7 @@ const ConfigPanel: React.FC<Props> = ({ config, setConfig, disabled, algo }) => 
         )}
 
         {/* ES Params */}
-        {algo === 'ES' && (
+        {algoConfig.configSections.esParams && (
             <>
                 <div className="col-span-2 border-t border-slate-700 pt-2 mt-2">
                     <p className={`text-xs mb-2 font-bold ${disabled ? 'text-fuchsia-400/50' : 'text-fuchsia-400'}`}>ES Parameters</p>
@@ -397,7 +399,7 @@ const ConfigPanel: React.FC<Props> = ({ config, setConfig, disabled, algo }) => 
         )}
 
         {/* Knapsack Editor */}
-        {algo === 'GA' && (
+        {algoConfig.configSections.knapsackParams && (
             <div className="col-span-2 border-t border-slate-700 pt-2 mt-2">
                 <div className="flex justify-between items-center mb-2">
                     <p className="text-xs text-amber-400 font-bold">Knapsack Items ({config.knapsackItems.length}/15)</p>

@@ -2,38 +2,34 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Population, EAConfig, DEFAULT_CONFIG } from '../utils/common';
 import { StepLog } from '../utils/internal-algo-logs';
-import { initGA, stepGA } from '../algorithms/ga';
-import { initDE, stepDE } from '../algorithms/de';
-import { initPSO, stepPSO } from '../algorithms/pso';
-import { initGP, stepGP } from '../algorithms/gp';
-import { initES, stepES } from '../algorithms/es';
 import PopulationTable from '../components/PopulationTable';
 import Visualizer from '../components/Visualizer';
 import ConfigPanel from '../components/ConfigPanel';
 import StepLogView from '../components/StepLogView';
 import { Github, ArrowLeft } from 'lucide-react';
-
-type Algorithm = 'GA' | 'DE' | 'PSO' | 'GP' | 'ES';
+import { ALGORITHMS, AlgorithmId, getAlgorithmConfig, supports3DVisualization } from '../config/algorithms';
+import { getAlgorithmFunctions } from '../config/algorithmRegistry';
 
 const VisualizerPage: React.FC = () => {
     const { algo: algoParam } = useParams<{ algo: string }>();
     const navigate = useNavigate();
     
-    // Validate algo param
-    const validAlgos: Algorithm[] = ['GA', 'DE', 'PSO', 'GP', 'ES'];
-    const algo = (validAlgos.find(a => a === algoParam?.toUpperCase()) || 'GA') as Algorithm;
+    // Validate algo param using config
+    const validAlgoIds = ALGORITHMS.map(a => a.id);
+    const algoId = (validAlgoIds.find(a => a === algoParam?.toUpperCase()) || 'GA') as AlgorithmId;
+    const algoConfig = getAlgorithmConfig(algoId)!;
 
     // Scroll to top when component mounts or algo changes
     useEffect(() => {
         window.scrollTo(0, 0);
-    }, [algo]);
+    }, [algoId]);
 
     // Redirect if param was invalid (optional, but keeps URL clean)
     useEffect(() => {
-        if (algoParam?.toUpperCase() !== algo) {
-            navigate(`/visualizer/${algo.toLowerCase()}`, { replace: true });
+        if (algoParam?.toUpperCase() !== algoId) {
+            navigate(`/visualizer/${algoId.toLowerCase()}`, { replace: true });
         }
-    }, [algoParam, algo, navigate]);
+    }, [algoParam, algoId, navigate]);
 
     const [config, setConfig] = useState<EAConfig>(DEFAULT_CONFIG);
     const [pop, setPop] = useState<Population>([]);
@@ -45,16 +41,21 @@ const VisualizerPage: React.FC = () => {
     const [scatter2DMaximized, setScatter2DMaximized] = useState(false);
     const [scatter3DMaximized, setScatter3DMaximized] = useState(false);
 
-    // Enforce 2D genome for algorithms using 3D visualization to match plot dimensions
+    // Enforce genome count based on algorithm and problem type
     useEffect(() => {
         setConfig(prev => {
-            const is3DViz = algo === 'DE' || algo === 'PSO' || algo === 'ES' || (algo === 'GP' && prev.gpProblem === 'Linear');
+            const is3DViz = supports3DVisualization(algoId, prev.gpProblem);
             
             let targetGenes = prev.genesCount;
-            if (is3DViz) {
+            if (algoId === 'GP') {
+                targetGenes = prev.gpProblem === 'Linear' ? 2 : 5;
+            } else if (is3DViz) {
                 targetGenes = 2;
-            } else if (algo === 'GP' && prev.gpProblem === 'Sine') {
-                targetGenes = 5;
+            } else if (algoId === 'GA') {
+                // GA uses knapsack items count, handled elsewhere
+                return prev;
+            } else {
+                targetGenes = algoConfig.defaultGenesCount;
             }
             
             if (prev.genesCount !== targetGenes) {
@@ -62,23 +63,20 @@ const VisualizerPage: React.FC = () => {
             }
             return prev;
         });
-    }, [algo, config.gpProblem]);
+    }, [algoId, config.gpProblem, algoConfig]);
 
     // Initialize function
     const reset = useCallback(() => {
-        let initialPop: Population = [];
-
-        if (algo === 'GA') initialPop = initGA(config);
-        if (algo === 'DE') initialPop = initDE(config);
-        if (algo === 'PSO') initialPop = initPSO(config);
-        if (algo === 'GP') initialPop = initGP(config);
-        if (algo === 'ES') initialPop = initES(config);
+        const algoFunctions = getAlgorithmFunctions(algoId);
+        const initialPop = algoFunctions.init(config);
 
         setPop(initialPop);
         setGen(0);
 
         const fits = initialPop.map(p => p.fitness);
-        const best = algo === 'GA' ? Math.max(...fits) : Math.min(...fits);
+        const best = algoConfig.fitnessDirection === 'maximize' 
+            ? Math.max(...fits) 
+            : Math.min(...fits);
         const avg = fits.reduce((a, b) => a + b, 0) / fits.length;
 
         setHistory([{
@@ -88,7 +86,7 @@ const VisualizerPage: React.FC = () => {
         }]);
         setStepLogs([]);
         setRunning(false);
-    }, [algo, config]);
+    }, [algoId, config, algoConfig]);
 
     // Initial load & when algo changes
     useEffect(() => {
@@ -102,18 +100,15 @@ const VisualizerPage: React.FC = () => {
         }
 
         setPop(prev => {
-            let result: { nextPop: Population; logs: StepLog } = { nextPop: [], logs: [] };
-
-            if (algo === 'GA') result = stepGA(prev, config);
-            else if (algo === 'DE') result = stepDE(prev, config);
-            else if (algo === 'PSO') result = stepPSO(prev, config);
-            else if (algo === 'GP') result = stepGP(prev, config);
-            else if (algo === 'ES') result = stepES(prev, config);
+            const algoFunctions = getAlgorithmFunctions(algoId);
+            const result = algoFunctions.step(prev, config);
 
             const { nextPop, logs } = result;
 
             const fits = nextPop.map(p => p.fitness);
-            const best = algo === 'GA' ? Math.max(...fits) : Math.min(...fits);
+            const best = algoConfig.fitnessDirection === 'maximize'
+                ? Math.max(...fits)
+                : Math.min(...fits);
             const avg = fits.reduce((a, b) => a + b, 0) / fits.length;
 
             setHistory(h => {
@@ -125,7 +120,7 @@ const VisualizerPage: React.FC = () => {
             return nextPop;
         });
         setGen(g => g + 1);
-    }, [algo, gen, config]);
+    }, [algoId, gen, config, algoConfig]);
 
     useEffect(() => {
         let interval: any;
@@ -144,8 +139,8 @@ const VisualizerPage: React.FC = () => {
         }
     }, [gen, config.maxGenerations, running]);
 
-    const handleAlgoChange = (newAlgo: Algorithm) => {
-        navigate(`/visualizer/${newAlgo.toLowerCase()}`);
+    const handleAlgoChange = (newAlgoId: AlgorithmId) => {
+        navigate(`/visualizer/${newAlgoId.toLowerCase()}`);
     };
 
     return (
@@ -189,30 +184,23 @@ const VisualizerPage: React.FC = () => {
 
                  {/* Center: Navigation Tabs - Grouped as single component */}
                  <div className="relative z-10 flex gap-1.5 sm:gap-2 overflow-x-auto w-full sm:w-auto justify-center sm:justify-start scrollbar-hide">
-                    {validAlgos.map((a, index) => {
-                        const algoNames: Record<Algorithm, string> = {
-                            'GA': 'Genetic Algorithm',
-                            'DE': 'Differential Evolution',
-                            'PSO': 'Particle Swarm Optimization',
-                            'GP': 'Genetic Programming',
-                            'ES': 'Evolution Strategies'
-                        };
+                    {ALGORITHMS.map((algo, index) => {
                         // Show tooltip above for last 2 buttons (GP, ES) to prevent overflow
                         const showTooltipAbove = index >= 3;
                         return (
                             <button
-                                key={a}
-                                onClick={() => handleAlgoChange(a)}
-                                title={algoNames[a]}
+                                key={algo.id}
+                                onClick={() => handleAlgoChange(algo.id)}
+                                title={algo.fullName}
                                 className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-bold text-xs sm:text-sm transition-all relative group whitespace-nowrap flex-shrink-0 ${
-                                    algo === a 
+                                    algoId === algo.id 
                                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' 
                                     : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
                                 }`}
                             >
-                                {a}
+                                {algo.name}
                                 <span className={`hidden sm:block absolute ${showTooltipAbove ? 'bottom-full mb-2' : 'top-full mt-2'} left-1/2 transform -translate-x-1/2 px-3 py-1.5 bg-slate-900 text-slate-200 text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap border border-slate-700 shadow-lg z-50`}>
-                                    {algoNames[a]}
+                                    {algo.fullName}
                                 </span>
                             </button>
                         );
@@ -240,18 +228,20 @@ const VisualizerPage: React.FC = () => {
                         {/* Problem Context - Separate Section */}
                         <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
                             <h4 className="text-sm font-bold uppercase text-slate-300 mb-4">Problem Context</h4>
-                            {algo === 'GA' && (
+                            {algoConfig.visualizationType === 'knapsack' && (
                                 <div className="text-sm space-y-2">
                                     <p className="text-amber-400 font-semibold text-base">Knapsack Problem</p>
                                     <p className="text-slate-300">Capacity: <span className="text-amber-400 font-semibold">{config.knapsackCapacity}</span></p>
                                     <p className="text-slate-400 mt-3 italic text-xs">See item list in configuration above.</p>
                                 </div>
                             )}
-                            {(algo === 'DE' || algo === 'PSO' || algo === 'ES') && (
+                            {algoConfig.visualizationType === 'real-valued' && (
                                 <div className="text-sm space-y-2">
-                                    {algo === 'ES' && <p className="text-fuchsia-400 font-semibold text-base">Evolution Strategy (ES)</p>}
-                                    {algo === 'PSO' && <p className="text-emerald-400 font-semibold text-base">Particle Swarm (PSO)</p>}
-                                    {algo === 'DE' && <p className="text-blue-400 font-semibold text-base">Differential Evolution (DE)</p>}
+                                    <p className={`font-semibold text-base ${
+                                        algoConfig.color === 'fuchsia' ? 'text-fuchsia-400' :
+                                        algoConfig.color === 'emerald' ? 'text-emerald-400' :
+                                        'text-blue-400'
+                                    }`}>{algoConfig.fullName}</p>
                                     
                                     <p className="text-white font-bold mt-3 text-base">{config.problemType || 'Sphere'} Function</p>
                                     
@@ -264,7 +254,7 @@ const VisualizerPage: React.FC = () => {
                                     <p className="text-slate-300">Target: <span className="text-emerald-400 font-semibold">0</span></p>
                                 </div>
                             )}
-                            {algo === 'GP' && (
+                            {(algoConfig.visualizationType === 'gp-linear' || algoConfig.visualizationType === 'gp-sine') && (
                                 <div className="text-sm space-y-2">
                                     <p className="text-purple-400 font-semibold text-base">Genetic Programming</p>
                                     {config.gpProblem === 'Linear' ? (
@@ -325,7 +315,7 @@ const VisualizerPage: React.FC = () => {
                             </button>
                         </div>
 
-                        <ConfigPanel config={config} setConfig={setConfig} disabled={running || gen > 0} algo={algo} />
+                        <ConfigPanel config={config} setConfig={setConfig} disabled={running || gen > 0} algo={algoId} />
                         </div>
                     </div>
                 </div>
@@ -335,7 +325,7 @@ const VisualizerPage: React.FC = () => {
                     <Visualizer 
                         history={history} 
                         currentPop={pop} 
-                        algo={algo} 
+                        algo={algoId} 
                         config={config} 
                         errorHistoryMaximized={errorHistoryMaximized}
                         scatter2DMaximized={scatter2DMaximized}
@@ -372,12 +362,12 @@ const VisualizerPage: React.FC = () => {
                         <>
                             <PopulationTable
                                 population={pop}
-                                algo={algo}
+                                algo={algoId}
                                 knapsackItems={config.knapsackItems}
                                 knapsackCapacity={config.knapsackCapacity}
                                 config={config}
                             />
-                            <StepLogView logs={stepLogs} algo={algo} />
+                            <StepLogView logs={stepLogs} algo={algoId} />
                         </>
                     )}
                 </div>

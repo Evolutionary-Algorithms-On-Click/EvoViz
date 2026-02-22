@@ -4,6 +4,8 @@ import { Maximize2, Minimize2 } from 'lucide-react';
 import { Individual, EAConfig } from '../utils/common';
 import { evaluateGP } from '../utils/functions';
 import ThreeDScatter from './ThreeDScatter';
+import { getAlgorithmConfig, getVisualizationType, supports3DVisualization } from '../config/algorithms';
+import { AlgorithmId } from '../config/algorithms';
 
 interface HistoryPoint {
   generation: number;
@@ -14,7 +16,7 @@ interface HistoryPoint {
 interface Props {
   history: HistoryPoint[];
   currentPop: Individual[];
-  algo: string;
+  algo: AlgorithmId;
   config: EAConfig;
   errorHistoryMaximized?: boolean;
   scatter2DMaximized?: boolean;
@@ -36,9 +38,12 @@ const Visualizer: React.FC<Props> = ({
   onToggleScatter2D,
   onToggleScatter3D
 }) => {
-  const isKnapsack = algo === 'GA';
+  const algoConfig = getAlgorithmConfig(algo)!;
+  const visualizationType = getVisualizationType(algo, config.gpProblem);
+  const isKnapsack = visualizationType === 'knapsack';
   const isGP = algo === 'GP';
   const isGPSine = isGP && config.gpProblem === 'Sine';
+  const isRealValued = visualizationType === 'real-valued';
   
   const scatterData = useMemo(() => {
     if (isKnapsack) {
@@ -87,10 +92,9 @@ const Visualizer: React.FC<Props> = ({
       return data;
   }, [currentPop, isGPSine, config]);
 
-  const isRealValued = !isKnapsack && !isGP;
-
-  // Grid layout - always use same column count
-  const gridCols = isRealValued ? 'xl:grid-cols-3 lg:grid-cols-2' : 'lg:grid-cols-2';
+  // Grid layout: 3 columns only when 3D panel is shown (DE, PSO, ES, RS3D); otherwise 2 columns like GP
+  const show3D = supports3DVisualization(algo, config.gpProblem);
+  const gridCols = (isRealValued && show3D) ? 'xl:grid-cols-3 lg:grid-cols-2' : 'lg:grid-cols-2';
 
   // Height classes based on maximized state
   const normalHeightClass = 'h-64';
@@ -117,7 +121,7 @@ const Visualizer: React.FC<Props> = ({
               </button>
             )}
             <h3 className="text-xs uppercase text-slate-400 mb-2">
-              {isKnapsack ? 'Value History (Higher is Better)' : 'Error History (Lower is Better)'}
+              {algoConfig.fitnessDirection === 'maximize' ? 'Value History (Higher is Better)' : 'Error History (Lower is Better)'}
             </h3>
             <div style={{ width: '100%', height: '85%' }}>
               <ResponsiveContainer>
@@ -196,7 +200,7 @@ const Visualizer: React.FC<Props> = ({
         )}
 
         {/* 3D Scatter (Only for Real Valued) - render first if not maximized, last if maximized */}
-        {isRealValued && !scatter3DMaximized && (
+        {supports3DVisualization(algo, config.gpProblem) && !scatter3DMaximized && (
           <div className={`relative ${normalHeightClass}`}>
             {onToggleScatter3D && (
               <button 
@@ -229,7 +233,7 @@ const Visualizer: React.FC<Props> = ({
               </button>
             )}
             <h3 className="text-xs uppercase text-slate-400 mb-2">
-              {isKnapsack ? 'Value History (Higher is Better)' : 'Error History (Lower is Better)'}
+              {algoConfig.fitnessDirection === 'maximize' ? 'Value History (Higher is Better)' : 'Error History (Lower is Better)'}
             </h3>
             <div style={{ width: '100%', height: '85%' }}>
               <ResponsiveContainer>
@@ -302,7 +306,7 @@ const Visualizer: React.FC<Props> = ({
           </div>
         )}
 
-        {isRealValued && scatter3DMaximized && (
+        {supports3DVisualization(algo, config.gpProblem) && scatter3DMaximized && (
           <div className={`relative ${maximizedHeightClass} col-span-full`}>
             {onToggleScatter3D && (
               <button 

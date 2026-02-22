@@ -1,9 +1,10 @@
 import React from 'react';
 import { StepLog, GALogEntry, DELogEntry, PSOLogEntry, GPLogEntry, ESLogEntry } from '../utils/internal-algo-logs';
+import { AlgorithmId } from '../config/algorithms';
 
 interface Props {
   logs: StepLog;
-  algo: string;
+  algo: AlgorithmId;
 }
 
 const StepLogView: React.FC<Props> = ({ logs, algo }) => {
