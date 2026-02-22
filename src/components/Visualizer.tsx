@@ -92,8 +92,9 @@ const Visualizer: React.FC<Props> = ({
       return data;
   }, [currentPop, isGPSine, config]);
 
-  // Grid layout - always use same column count
-  const gridCols = isRealValued ? 'xl:grid-cols-3 lg:grid-cols-2' : 'lg:grid-cols-2';
+  // Grid layout: 3 columns only when 3D panel is shown (DE, PSO, ES, RS3D); otherwise 2 columns like GP
+  const show3D = supports3DVisualization(algo, config.gpProblem);
+  const gridCols = (isRealValued && show3D) ? 'xl:grid-cols-3 lg:grid-cols-2' : 'lg:grid-cols-2';
 
   // Height classes based on maximized state
   const normalHeightClass = 'h-64';

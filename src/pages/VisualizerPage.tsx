@@ -47,10 +47,10 @@ const VisualizerPage: React.FC = () => {
             const is3DViz = supports3DVisualization(algoId, prev.gpProblem);
             
             let targetGenes = prev.genesCount;
-            if (is3DViz) {
+            if (algoId === 'GP') {
+                targetGenes = prev.gpProblem === 'Linear' ? 2 : 5;
+            } else if (is3DViz) {
                 targetGenes = 2;
-            } else if (algoId === 'GP' && prev.gpProblem === 'Sine') {
-                targetGenes = 5;
             } else if (algoId === 'GA') {
                 // GA uses knapsack items count, handled elsewhere
                 return prev;

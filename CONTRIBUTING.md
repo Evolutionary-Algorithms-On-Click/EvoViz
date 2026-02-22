@@ -86,7 +86,8 @@ export const ALGORITHMS: readonly AlgorithmConfig[] = [
     visualizationType: 'real-valued',   // 'knapsack' | 'real-valued' | 'gp-linear' | 'gp-sine'
     problemType: 'sphere',              // 'knapsack' | 'sphere' | 'ackley' | 'gp-linear' | 'gp-sine'
     fitnessDirection: 'minimize',        // 'maximize' | 'minimize'
-    supports3D: true,                   // Whether to show 3D visualization
+    supports3D: true,                   // Whether to show 3D visualization (ignored if force2DOnly is true)
+    force2DOnly: false,                 // Set true to always use 2D only (e.g. GP with Linear/Sine)
     defaultGenesCount: 2,               // Default number of genes/dimensions
     hasProblemSelector: false,           // Show Sphere/Ackley selector (for real-valued)
     hasGPProblemSelector: false,         // Show Linear/Sine selector (for GP)
@@ -107,8 +108,8 @@ export const ALGORITHMS: readonly AlgorithmConfig[] = [
 
 - **visualizationType**: Determines how the algorithm is visualized
   - `'knapsack'`: For binary/knapsack problems (like GA)
-  - `'real-valued'`: For continuous optimization (like DE, PSO, ES)
-  - `'gp-linear'` or `'gp-sine'`: For genetic programming problems
+  - `'real-valued'`: For continuous optimization (like DE, PSO, ES); can show 3D if `supports3D` is true and `force2DOnly` is not set
+  - `'gp-linear'` or `'gp-sine'`: For genetic programming. The effective type is chosen at runtime from the GP problem selector (Linear → 2D projection of genes; Sine → function fit target vs best). GP uses 2D only (Error History + one of those charts); set `force2DOnly: true` for such algorithms
 
 - **problemType**: The default problem your algorithm solves
   - For real-valued algorithms, set `hasProblemSelector: true` to allow users to choose between Sphere/Ackley
@@ -117,7 +118,9 @@ export const ALGORITHMS: readonly AlgorithmConfig[] = [
   - Only enable sections relevant to your algorithm
   - If you need custom parameters, you may need to extend `EAConfig` in `src/utils/common.ts`
 
-- **supports3D**: Set to `true` if your algorithm works with 2D continuous problems (genes.length === 2) and you want 3D visualization
+- **supports3D**: Set to `true` if your algorithm works with 2D continuous problems (genes.length === 2) and you want 3D visualization. The UI uses a helper `supports3DVisualization(algoId, gpProblem)` which respects this and the next option.
+
+- **force2DOnly** (optional): Set to `true` to always use 2D visualizations only (no 3D scatter). Use this for algorithms like GP that have problem sub-types (e.g. Linear vs Sine) and show Error History plus either a 2D projection or a function-fit chart. When `force2DOnly` is true, `supports3D` is ignored for the 3D panel.
 
 ### Step 3: Register Algorithm Functions
 
@@ -327,6 +330,9 @@ That's it! Your algorithm will now appear in the UI automatically.
 Available colors: `'blue'`, `'amber'`, `'emerald'`, `'purple'`, `'fuchsia'`
 - Each color has a matching theme for borders, shadows, and hover effects
 - Choose a color that's not already heavily used for visual variety
+
+### Algorithms with problem sub-types (e.g. GP Linear vs Sine)
+- Gene count can depend on the selected sub-type. GP enforces 2 genes for Linear and 5 for Sine in `VisualizerPage.tsx`. If you add an algorithm with a similar selector, you may need to add matching gene-count logic there so the UI and visualizations stay consistent.
 
 ### Layout Considerations
 - The landing page automatically displays all algorithms in a responsive grid

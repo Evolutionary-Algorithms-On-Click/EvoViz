@@ -15,6 +15,8 @@ export interface AlgorithmConfig {
   problemType: ProblemType;
   fitnessDirection: FitnessDirection;
   supports3D: boolean;
+  /** If true, only 2D visualizations are shown (no 3D scatter). Use for e.g. GP (Linear/Sine). */
+  force2DOnly?: boolean;
   defaultGenesCount: number;
   hasProblemSelector?: boolean; // For DE, PSO, ES (Sphere vs Ackley)
   hasGPProblemSelector?: boolean; // For GP (Linear vs Sine)
@@ -94,6 +96,7 @@ export const ALGORITHMS: readonly AlgorithmConfig[] = [
     problemType: 'gp-linear',
     fitnessDirection: 'minimize',
     supports3D: false,
+    force2DOnly: true, // GP uses Error History + 2D Projection (Linear) or Function Fit (Sine) only
     defaultGenesCount: 5, // For Sine, 2 for Linear
     hasGPProblemSelector: true,
     configSections: {
@@ -132,11 +135,7 @@ export const getAlgorithmConfig = (id: string): AlgorithmConfig | undefined => {
 export const supports3DVisualization = (algoId: string, gpProblem?: 'Linear' | 'Sine'): boolean => {
   const config = getAlgorithmConfig(algoId);
   if (!config) return false;
-  
-  if (config.id === 'GP') {
-    return gpProblem === 'Linear';
-  }
-  
+  if (config.force2DOnly) return false;
   return config.supports3D;
 };
 
